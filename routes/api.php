@@ -10,6 +10,7 @@ use App\Http\Controllers\File\FileController;
 use App\Http\Controllers\Supplier\SupplierController;
 use App\Http\Controllers\Challan\ChallanController;
 
+// Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -56,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // All Challan Routes
     Route::prefix('challans')->group(function () {
         Route::post('/', [ChallanController::class, 'store']);
-        Route::get('/{challans_id}', [ChallanController::class, 'show']);
         Route::get('/', [ChallanController::class, 'index']);
+        Route::get('/{challans_id}', [ChallanController::class, 'show']);
     });
 });
