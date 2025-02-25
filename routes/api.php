@@ -7,6 +7,8 @@ use App\Http\Controllers\Category\CategoryController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Tag\TagController;
 use App\Http\Controllers\File\FileController;
+use App\Http\Controllers\Supplier\SupplierController;
+use App\Http\Controllers\Challan\ChallanController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -40,5 +42,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/remove-tags/{product_id}', [TagController::class, 'removeTags']);
         Route::post('/add-images/{product_id}', [FileController::class, 'addImagesProduct']);
         Route::delete('/remove-image/{product_id}', [FileController::class, 'removePeoductImage']);
+    });
+
+    // All Suppliers Routes
+    Route::prefix('suppliers')->group(function () {
+        Route::post('/', [SupplierController::class, 'store']);
+        Route::get('/', [SupplierController::class, 'index']);
+        Route::get('//{suppliers_id}', [SupplierController::class, 'show']);
+        Route::put('/{suppliers_id}', [SupplierController::class, 'update']);
+        Route::delete('/{suppliers_id}', [SupplierController::class, 'delete']);
+    });
+
+    // All Challan Routes
+    Route::prefix('challans')->group(function () {
+        Route::post('/', [ChallanController::class, 'store']);
+        Route::get('/{challans_id}', [ChallanController::class, 'show']);
+        Route::get('/', [ChallanController::class, 'index']);
     });
 });

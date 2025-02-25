@@ -15,4 +15,10 @@ class Supplier extends Model
         'phone2',
         'address'
     ];
+
+    // Relationship with Challan
+    public function challans()
+    {
+        return $this->hasMany(Challan::class, 'supplier_id');
+    }
 }

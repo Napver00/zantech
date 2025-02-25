@@ -47,4 +47,10 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    // Relationship with Challan
+    public function challans()
+    {
+        return $this->hasMany(Challan::class, 'user_id');
+    }
 }

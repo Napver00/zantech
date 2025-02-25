@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('challans', function (Blueprint $table) {
             $table->id();
             $table->string('Date');
-            $table->integer('item_id');
             $table->integer('user_id');
             $table->string('delivery_price');
             $table->string('total');

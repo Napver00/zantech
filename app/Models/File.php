@@ -19,4 +19,10 @@ class File extends Model
     {
         return $this->belongsTo(Item::class, 'relatable_id');
     }
+
+    // Relationship with Challan
+    public function challan()
+    {
+        return $this->belongsTo(Challan::class, 'relatable_id');
+    }
 }

@@ -16,4 +16,16 @@ class Supplier_item_list extends Model
         'quantity',
         'challan_id'
     ];
+
+    // Relationship with Item
+    public function item()
+    {
+        return $this->belongsTo(Item::class, 'item_id');
+    }
+
+    // Relationship with Challan
+    public function challan()
+    {
+        return $this->belongsTo(Challan::class, 'challan_id');
+    }
 }
