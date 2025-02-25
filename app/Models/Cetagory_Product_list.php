@@ -13,4 +13,10 @@ class Cetagory_Product_list extends Model
         'category_id',
         'item_id',
     ];
+
+    // Relationship with Cetagory
+    public function category()
+    {
+        return $this->belongsTo(Cetagory::class, 'category_id');
+    }
 }

@@ -12,4 +12,10 @@ class Tag extends Model
         'item_id',
         'tag',
     ];
+
+    // Relationship with Item (product)
+    public function product()
+    {
+        return $this->belongsTo(Item::class, 'item_id');
+    }
 }

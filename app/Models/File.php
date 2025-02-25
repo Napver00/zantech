@@ -13,4 +13,10 @@ class File extends Model
         'type',
         'path'
     ];
+
+    // Relationship with Item (product)
+    public function product()
+    {
+        return $this->belongsTo(Item::class, 'relatable_id');
+    }
 }

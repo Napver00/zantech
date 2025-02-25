@@ -13,4 +13,10 @@ class Cetagory extends Model
         'description',
         'status',
     ];
+
+    // Relationship with Cetagory_Product_list
+    public function productLists()
+    {
+        return $this->hasMany(Cetagory_Product_list::class, 'category_id');
+    }
 }
