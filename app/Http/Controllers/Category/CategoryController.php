@@ -69,8 +69,8 @@ class CategoryController extends Controller
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
 
-            // Base query to fetch categories
-            $query = Category::query();
+            // Base query to fetch categories with descending order by 'created_at'
+            $query = Category::query()->orderBy('created_at', 'desc'); // Add descending order
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {

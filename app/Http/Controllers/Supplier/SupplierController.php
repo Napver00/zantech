@@ -62,8 +62,8 @@ class SupplierController extends Controller
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
 
-            // Base query to fetch suppliers
-            $query = Supplier::query();
+            // Base query to fetch suppliers with descending order by 'created_at'
+            $query = Supplier::query()->orderBy('created_at', 'desc');
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {

@@ -9,10 +9,17 @@ use App\Http\Controllers\Tag\TagController;
 use App\Http\Controllers\File\FileController;
 use App\Http\Controllers\Supplier\SupplierController;
 use App\Http\Controllers\Challan\ChallanController;
+use App\Http\Controllers\Rating\RatingController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// User Auth
+Route::prefix('users')->group(function () {
+    Route::post('/register', [AuthController::class, 'Userregister']);
+    Route::post('/login', [AuthController::class, 'Userlogin']);
+});
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -49,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('suppliers')->group(function () {
         Route::post('/', [SupplierController::class, 'store']);
         Route::get('/', [SupplierController::class, 'index']);
-        Route::get('//{suppliers_id}', [SupplierController::class, 'show']);
+        Route::get('/{suppliers_id}', [SupplierController::class, 'show']);
         Route::put('/{suppliers_id}', [SupplierController::class, 'update']);
         Route::delete('/{suppliers_id}', [SupplierController::class, 'delete']);
     });
@@ -59,5 +66,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [ChallanController::class, 'store']);
         Route::get('/', [ChallanController::class, 'index']);
         Route::get('/{challans_id}', [ChallanController::class, 'show']);
+    });
+
+    // Rating Routes
+    Route::prefix('ratings')->group(function () {
+        Route::post('/', [RatingController::class, 'store']);
+        Route::get('/', [RatingController::class, 'index']);
+        Route::post('/toggle-status/{Rating_id}', [RatingController::class, 'toggleStatus']);
     });
 });

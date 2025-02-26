@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Reating extends Model
+{
+    use HasFactory;
+    protected $fillable = [
+        'User_id',
+        'status',
+        'star',
+        'reating',
+        'product_id',
+    ];
+
+    // Relationship with Item (product)
+    public function product()
+    {
+        return $this->belongsTo(Item::class, 'product_id');
+    }
+}

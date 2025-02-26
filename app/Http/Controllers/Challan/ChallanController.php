@@ -185,7 +185,8 @@ class ChallanController extends Controller
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
 
-            $query = Challan::with('supplier');
+            // Base query to fetch challans with supplier information, ordered by descending order
+            $query = Challan::with('supplier')->orderBy('id', 'desc'); // Order by ID in descending order
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {

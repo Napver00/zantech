@@ -190,10 +190,10 @@ class ProductController extends Controller
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
 
-            // Base query to fetch products with one image
+            // Base query to fetch products with one image and order by 'created_at' in descending order
             $query = Item::with(['images' => function ($query) {
                 $query->select('relatable_id', 'path')->take(1); // Fetch only one image
-            }]);
+            }])->orderBy('created_at', 'desc'); // Add descending order
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {
