@@ -10,7 +10,7 @@ use App\Models\File;
 use App\Models\Challan;
 use App\Models\Supplier_item_list;
 use App\Models\User;
-use App\Models\Supplier;
+use App\Models\Expense;
 
 class ChallanController extends Controller
 {
@@ -59,6 +59,15 @@ class ChallanController extends Controller
                 'total' => $total,
                 'delivery_price' => $request->delivery_price,
                 'supplier_id' => $request->supplier_id,
+            ]);
+
+            // save in expense
+            Expense::create([
+                'date' => $request->Date,
+                'user_id' => $request->user_id,
+                'title' => 'Buying equipments',
+                'amount' => $total,
+                'description' => "Buying Equipment on {$request->date}. Total price is {$total}.",
             ]);
 
             // Save supplier-item data and update item quantities

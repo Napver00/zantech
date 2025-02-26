@@ -10,6 +10,7 @@ use App\Http\Controllers\File\FileController;
 use App\Http\Controllers\Supplier\SupplierController;
 use App\Http\Controllers\Challan\ChallanController;
 use App\Http\Controllers\Rating\RatingController;
+use App\Http\Controllers\Expense\ExpenseController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -73,5 +74,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [RatingController::class, 'store']);
         Route::get('/', [RatingController::class, 'index']);
         Route::post('/toggle-status/{Rating_id}', [RatingController::class, 'toggleStatus']);
+    });
+
+    // Expense Routes
+    Route::prefix('expenses')->group(function () {
+        Route::post('/', [ExpenseController::class, 'store']);
+        Route::get('/', [ExpenseController::class, 'index']);
+        Route::put('/{expense_id}', [ExpenseController::class, 'update']);
     });
 });
