@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->integer('price');
             $table->integer('discount')->nullable();
+            $table->integer('is_bundle')->nullable();
             $table->timestamps();
         });
     }

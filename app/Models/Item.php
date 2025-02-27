@@ -16,7 +16,8 @@ class Item extends Model
         'status',
         'quantity',
         'price',
-        'discount'
+        'discount',
+        'is_bundle'
     ];
 
     // Relationship with Cetagory_Product_list
@@ -35,5 +36,24 @@ class Item extends Model
     public function images()
     {
         return $this->hasMany(File::class, 'relatable_id')->where('type', 'product');
+    }
+
+    // Relationship with BundleItem (to fetch related bundle items)
+    public function bundleItems()
+    {
+        return $this->hasMany(BundleItem::class, 'bundle_item_id');
+    }
+
+    // Relationship to fetch the actual items in the bundle
+    public function relatedBundleItems()
+    {
+        return $this->hasManyThrough(
+            Item::class,
+            BundleItem::class,
+            'bundle_item_id',
+            'id',
+            'id',
+            'item_id'
+        );
     }
 }

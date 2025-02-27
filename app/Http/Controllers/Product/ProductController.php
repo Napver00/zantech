@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Item;
 use App\Models\File;
 use App\Models\Tag;
+use App\Models\BundleItem;
 use App\Models\Cetagory_Product_list;
 
 class ProductController extends Controller
@@ -31,6 +32,10 @@ class ProductController extends Controller
                 'tags.*' => 'string|max:255',
                 'images' => 'nullable|array',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:4048',
+                'is_bundle' => 'nullable|integer',
+                'bundls_item' => 'nullable|array',
+                'bundls_item.*.item_id' => 'required|integer|exists:items,id',
+                'bundls_item.*.bundle_quantity' => 'nullable|integer|min:1',
             ]);
 
             // If validation fails, return error response
@@ -53,7 +58,19 @@ class ProductController extends Controller
                 'quantity' => $request->quantity,
                 'price' => $request->price,
                 'discount' => $request->discount,
+                'is_bundle' => $request->is_bundle,
             ]);
+
+            // Save bundle items with bundle_quantity
+            if ($request->has('bundls_item')) {
+                foreach ($request->bundls_item as $bundleItem) {
+                    BundleItem::create([
+                        'item_id' => $bundleItem['item_id'],
+                        'bundle_item_id' => $product->id,
+                        'bundle_quantity' => $bundleItem['bundle_quantity'] ?? 1,
+                    ]);
+                }
+            }
 
             // Save categories
             if ($request->has('categories')) {
@@ -118,7 +135,8 @@ class ProductController extends Controller
             $product = Item::with([
                 'categories.category',
                 'tags',
-                'images'
+                'images',
+                'bundleItems.item.images'
             ])->find($id);
 
             // Check if the product exists
@@ -150,7 +168,7 @@ class ProductController extends Controller
                 }),
                 'tags' => $product->tags->map(function ($tag) {
                     return [
-                        'id' => $tag->id, // Include tag ID
+                        'id' => $tag->id,
                         'tag' => $tag->tag,
                     ];
                 }),
@@ -161,6 +179,23 @@ class ProductController extends Controller
                     ];
                 }),
             ];
+
+            // Add bundle items if the product is a bundle
+            if ($product->is_bundle == 1) {
+                $formattedProduct['bundle_items'] = $product->bundleItems->map(function ($bundleItem) {
+                    $item = $bundleItem->item; // Get the related item
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'price' => $item->price,
+                        'discount' => $item->discount,
+                        'bundle_quantity' => $bundleItem->bundle_quantity,
+                        'image' => $item->images->isNotEmpty()
+                            ? asset('storage/' . str_replace('public/', '', $item->images->first()->path))
+                            : null,
+                    ];
+                });
+            }
 
             // Return success response
             return response()->json([
@@ -192,8 +227,8 @@ class ProductController extends Controller
 
             // Base query to fetch products with one image and order by 'created_at' in descending order
             $query = Item::with(['images' => function ($query) {
-                $query->select('relatable_id', 'path')->take(1); // Fetch only one image
-            }])->orderBy('created_at', 'desc'); // Add descending order
+                $query->select('relatable_id', 'path')->take(1);
+            }])->orderBy('created_at', 'desc');
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {
@@ -440,6 +475,7 @@ class ProductController extends Controller
             Cetagory_Product_list::where('item_id', $product_id)->delete();
             Tag::where('item_id', $product_id)->delete();
             File::where('relatable_id', $product_id)->where('type', 'product')->delete();
+            BundleItem::where('bundle_item_id', $product_id)->delete();
 
             // Delete the product
             $product->delete();

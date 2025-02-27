@@ -11,6 +11,7 @@ use App\Http\Controllers\Supplier\SupplierController;
 use App\Http\Controllers\Challan\ChallanController;
 use App\Http\Controllers\Rating\RatingController;
 use App\Http\Controllers\Expense\ExpenseController;
+use App\Http\Controllers\BundleItem\BundleItemController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -31,10 +32,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('categories')->group(function () {
         Route::post('/', [CategoryController::class, 'store']);
         Route::get('/', [CategoryController::class, 'index']);
-        Route::get('/{id}', [CategoryController::class, 'show']);
-        Route::put('/{id}', [CategoryController::class, 'update']);
-        Route::delete('/{id}', [CategoryController::class, 'destroy']);
-        Route::patch('/toggle-status/{id}', [CategoryController::class, 'toggleStatus']);
+        Route::get('/{categorie_id}', [CategoryController::class, 'show']);
+        Route::put('/{categorie_id}', [CategoryController::class, 'update']);
+        Route::delete('/{categorie_id}', [CategoryController::class, 'destroy']);
+        Route::patch('/toggle-status/{categorie_id}', [CategoryController::class, 'toggleStatus']);
     });
 
     // All Products Routes
@@ -51,6 +52,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/remove-tags/{product_id}', [TagController::class, 'removeTags']);
         Route::post('/add-images/{product_id}', [FileController::class, 'addImagesProduct']);
         Route::delete('/remove-image/{product_id}', [FileController::class, 'removePeoductImage']);
+        Route::prefix('bundles')->group(function () {
+            Route::post('/{bundleId}', [BundleItemController::class, 'addItemsToBundle']);
+            Route::post('/update-quantity/{bundleId}', [BundleItemController::class, 'updateQuantity']);
+            Route::post('/toggle-bundle/{product_id}', [BundleItemController::class, 'toggleBundle']);
+            Route::delete('/delete/{bundleId}', [BundleItemController::class, 'deleteBundle']);
+        });
     });
 
     // All Suppliers Routes
@@ -73,7 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('ratings')->group(function () {
         Route::post('/', [RatingController::class, 'store']);
         Route::get('/', [RatingController::class, 'index']);
-        Route::post('/toggle-status/{Rating_id}', [RatingController::class, 'toggleStatus']);
+        Route::post('/toggle-status/{rating_id}', [RatingController::class, 'toggleStatus']);
     });
 
     // Expense Routes
