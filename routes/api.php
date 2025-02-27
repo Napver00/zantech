@@ -13,6 +13,7 @@ use App\Http\Controllers\Rating\RatingController;
 use App\Http\Controllers\Expense\ExpenseController;
 use App\Http\Controllers\BundleItem\BundleItemController;
 use App\Http\Controllers\HeroSection\HeroSectionController;
+use App\Http\Controllers\Document\DocumentController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -96,5 +97,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [HeroSectionController::class, 'store']);
         Route::get('/', [HeroSectionController::class, 'index']);
         Route::delete('/{heroimage_id}', [HeroSectionController::class, 'destroy']);
+    });
+
+    // Documentation Routes
+    Route::prefix('documents')->group(function () {
+        Route::get('/about', [DocumentController::class, 'showAbout']);
+        Route::get('/term-condition', [DocumentController::class, 'showTrueCondition']);
+        Route::get('/privacy-policy', [DocumentController::class, 'showPrivacyPolicy']);
+        Route::get('/return-policy', [DocumentController::class, 'showReturnPolicy']);
+        Route::put('/{document_id}', [DocumentController::class, 'update']);
     });
 });
