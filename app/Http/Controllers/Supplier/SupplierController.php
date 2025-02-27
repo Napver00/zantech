@@ -73,7 +73,8 @@ class SupplierController extends Controller
                         'success' => false,
                         'status' => 400,
                         'message' => 'Invalid pagination parameters.',
-                        'data' => null
+                        'data' => null,
+                        'errors' => 'Invalid pagination parameters.',
                     ], 400);
                 }
 

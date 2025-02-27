@@ -93,7 +93,7 @@ class HeroSectionController extends Controller
                     'status' => 404,
                     'message' => 'Hero image not found.',
                     'data' => null,
-                    'errors' => null,
+                    'errors' => 'Hero image not found.',
                 ], 404);
             }
 

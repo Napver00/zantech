@@ -66,9 +66,7 @@ class ExpenseController extends Controller
                 'success' => true,
                 'status' => 201,
                 'message' => 'Expense created successfully.',
-                'data' => [
-                    'expense' => $expense,
-                ],
+                'data' =>  $expense,
             ], 201);
         } catch (\Exception $e) {
             // Handle any exceptions
@@ -103,6 +101,7 @@ class ExpenseController extends Controller
                         'status' => 400,
                         'message' => 'Invalid pagination parameters.',
                         'data' => null,
+                        'errors' => 'Invalid pagination parameters.',
                     ], 400);
                 }
 
@@ -213,6 +212,7 @@ class ExpenseController extends Controller
                     'status' => 404,
                     'message' => 'Expense not found.',
                     'data' => null,
+                    'errors' => 'Expense not found.',
                 ], 404);
             }
 

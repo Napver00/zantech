@@ -70,7 +70,7 @@ class CategoryController extends Controller
             $currentPage = $request->input('page');
 
             // Base query to fetch categories with descending order by 'created_at'
-            $query = Category::query()->orderBy('created_at', 'desc'); // Add descending order
+            $query = Category::query()->orderBy('created_at', 'desc');
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {
@@ -80,7 +80,8 @@ class CategoryController extends Controller
                         'success' => false,
                         'status' => 400,
                         'message' => 'Invalid pagination parameters.',
-                        'data' => null
+                        'data' => null,
+                        'errors'=> 'Invalid pagination parameters.',
                     ], 400);
                 }
 

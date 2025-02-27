@@ -222,7 +222,7 @@ class DocumentController extends Controller
                     'status' => 404,
                     'message' => 'OrderInfo data not found.',
                     'data' => null,
-                    'errors' => null,
+                    'errors' => 'OrderInfo data not found.',
                 ], 404);
             }
 
