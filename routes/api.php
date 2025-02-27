@@ -14,6 +14,7 @@ use App\Http\Controllers\Expense\ExpenseController;
 use App\Http\Controllers\BundleItem\BundleItemController;
 use App\Http\Controllers\HeroSection\HeroSectionController;
 use App\Http\Controllers\Document\DocumentController;
+use App\Http\Controllers\Shipping\ShippingController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -110,5 +111,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{document_id}', [DocumentController::class, 'update']);
         Route::get('/order-info', [DocumentController::class, 'showOrderInfo']);
         Route::put('/order-info/{orderinf_id}', [DocumentController::class, 'updateorderInfo']);
+    });
+
+    // Shipping Address Routes
+    Route::prefix('shipping-addresses')->group(function () {
+        Route::post('/', [ShippingController::class, 'store']);
+        Route::get('/', [ShippingController::class, 'index']);
+        Route::get('/{shipping_id}', [ShippingController::class, 'show']);
+        Route::put('/{shipping_id}', [ShippingController::class, 'update']);
+        Route::delete('/{shipping_id}', [ShippingController::class, 'destroy']);
     });
 });
