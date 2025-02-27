@@ -12,6 +12,7 @@ use App\Http\Controllers\Challan\ChallanController;
 use App\Http\Controllers\Rating\RatingController;
 use App\Http\Controllers\Expense\ExpenseController;
 use App\Http\Controllers\BundleItem\BundleItemController;
+use App\Http\Controllers\HeroSection\HeroSectionController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -88,5 +89,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [ExpenseController::class, 'store']);
         Route::get('/', [ExpenseController::class, 'index']);
         Route::put('/{expense_id}', [ExpenseController::class, 'update']);
+    });
+
+    // Hero Section Routes
+    Route::prefix('hero-images')->group(function () {
+        Route::post('/', [HeroSectionController::class, 'store']);
+        Route::get('/', [HeroSectionController::class, 'index']);
+        Route::delete('/{heroimage_id}', [HeroSectionController::class, 'destroy']);
     });
 });
