@@ -217,10 +217,12 @@ class ShippingController extends Controller
             // Get the authenticated user's ID
             $userId = Auth::id();
 
-            // Fetch all shipping addresses created by the user
-            $shippingAddresses = ShippingAddress::where('User_id', $userId)->get();
+            // Fetch all shipping addresses created by the user in descending order
+            $shippingAddresses = ShippingAddress::where('User_id', $userId)
+                ->orderBy('created_at', 'desc') // Sorting by latest created_at
+                ->get();
 
-            // Return the response in the specified format
+            // Return the response in JSON format
             return response()->json([
                 'success' => true,
                 'status' => 200,

@@ -51,15 +51,16 @@ class HeroSectionController extends Controller
     public function index()
     {
         try {
-            // Fetch all files where type is 'hero'
-            $heroImages = File::where('type', 'hero')->get();
+            // Fetch all files where type is 'hero' and order by latest created_at
+            $heroImages = File::where('type', 'hero')->orderBy('created_at', 'desc')->get();
 
+            // Transform image paths to full URLs
             $heroImages->transform(function ($image) {
                 $image->path = asset('storage/' . $image->path);
                 return $image;
             });
 
-            // Return the response in the specified format
+            // Return the response in JSON format
             return response()->json([
                 'success' => true,
                 'status' => 200,
