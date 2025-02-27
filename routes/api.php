@@ -29,6 +29,8 @@ Route::prefix('users')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
+    Route::put('/update-user-info', [AuthController::class, 'updateUserInfo']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     // All Categories Routes
     Route::prefix('categories')->group(function () {
@@ -108,6 +110,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{document_id}', [DocumentController::class, 'update']);
         Route::get('/order-info', [DocumentController::class, 'showOrderInfo']);
         Route::put('/order-info/{orderinf_id}', [DocumentController::class, 'updateorderInfo']);
-
     });
 });

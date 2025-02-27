@@ -261,7 +261,7 @@ class AuthController extends Controller
                         'status' => 403,
                         'message' => 'Access denied. Only users can log in.',
                         'data' => null,
-                        'errors' => null,
+                        'errors' => 'Access denied. Only users can log in.',
                     ], 403);
                 }
 
@@ -292,7 +292,7 @@ class AuthController extends Controller
                 'status' => 401,
                 'message' => 'Invalid email or password.',
                 'data' => null,
-                'errors' => null,
+                'errors' => 'Invalid email or password.',
             ], 401);
         } catch (\Exception $e) {
             // Handle any exceptions
@@ -300,6 +300,114 @@ class AuthController extends Controller
                 'success' => false,
                 'status' => 500,
                 'message' => 'An error occurred while logging in.',
+                'data' => null,
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // Change password
+    public function changePassword(Request $request)
+    {
+        try {
+            // Validate the request
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|confirmed',
+            ]);
+
+            // If validation fails, return error response
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 400,
+                    'message' => 'Validation failed.',
+                    'data' => null,
+                    'errors' => $validator->errors(),
+                ], 400);
+            }
+
+            // Get the authenticated user
+            $user = Auth::user();
+
+            // Check if the current password matches
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 400,
+                    'message' => 'Current password is incorrect.',
+                    'data' => null,
+                    'errors' => 'Current password is incorrect.',
+                ], 400);
+            }
+
+            // Update the password
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            // Return the response in the specified format
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Password changed successfully.',
+                'data' => null,
+                'errors' => null,
+            ], 200);
+        } catch (\Exception $e) {
+            // Handle errors and return a consistent error response
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Failed to change password.',
+                'data' => null,
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // update user information
+    public function updateUserInfo(Request $request)
+    {
+        try {
+            // Validate the request
+            $validator = Validator::make($request->all(), [
+                'name' => 'sometimes|string|max:255',
+                'email' => 'sometimes|string|email|max:255|unique:users,email,' . Auth::id(),
+                'phone' => 'sometimes|string|max:20',
+                'address' => 'sometimes|string|max:255',
+            ]);
+
+            // If validation fails, return error response
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 400,
+                    'message' => 'Validation failed.',
+                    'data' => null,
+                    'errors' => $validator->errors(),
+                ], 400);
+            }
+
+            // Get the authenticated user
+            $user = Auth::user();
+
+            // Update the user info
+            $user->update($request->only(['name', 'email', 'phone', 'address']));
+
+            // Return the response in the specified format
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'User info updated successfully.',
+                'data' => $user,
+                'errors' => null,
+            ], 200);
+        } catch (\Exception $e) {
+            // Handle errors and return a consistent error response
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Failed to update user info.',
                 'data' => null,
                 'errors' => $e->getMessage(),
             ], 500);
