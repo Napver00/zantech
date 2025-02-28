@@ -60,17 +60,20 @@ class OrderController extends Controller
     {
         return Validator::make($request->all(), [
             'coupon_id' => 'nullable|exists:coupons,id',
-            'user_id' => 'required|exists:users,id',
-            'shipping_id' => 'required|exists:shipping_addresses,id',
+            'user_id' => 'nullable|exists:users,id',
+            'shipping_id' => 'nullable|exists:shipping_addresses,id',
             'shipping_charge' => 'nullable|numeric|min:0',
             'product_subtotal' => 'required|numeric|min:0',
             'total' => 'required|numeric|min:0',
-            'phone' => 'nullable|string|max:20',
+            'paymentphone' => 'nullable|string|max:20',
             'products' => 'required|array',
             'products.*.product_id' => 'required|exists:items,id',
             'products.*.quantity' => 'required|integer|min:1',
             'payment_type' => 'required|integer|in:1,2', // 1 = Cash on Delivery, 2 = Bkash
             'trxed' => 'nullable|string|max:255',
+            'user_name' => 'required_if:user_id,null|string|max:255',
+            'address' => 'required_if:shipping_id,null|string|max:255',
+            'userphone' => 'nullable|string|max:20',
         ]);
     }
 
@@ -107,6 +110,9 @@ class OrderController extends Controller
             'total_amount' => $request->total,
             'coupons_id' => $request->coupon_id,
             'discount' => $request->discount ?? 0,
+            'user_name' => $request->user_name,
+            'phone' => $request->userphone,
+            'address' => $request->address,
         ]);
     }
 
@@ -188,7 +194,7 @@ class OrderController extends Controller
             'padi_amount' => 0,
             'payment_type' => $request->payment_type,
             'trxed' => $request->trxed,
-            'phone' => $request->phone
+            'phone' => $request->paymentphone
         ]);;
     }
 
@@ -250,9 +256,9 @@ class OrderController extends Controller
             // Format the response data
             $formattedOrders = $orders->map(function ($order) {
                 return [
-                    'user_name' => $order->user->name,
-                    'user_phone' => $order->user->phone,
-                    'user_email' => $order->user->email,
+                    'user_name' => $order->user?->name ?? $order->user_name,
+                    'user_phone' => $order->user?->phone ?? $order->phone,
+                    'user_email' => $order->user?->email ?? null,
                     'order_id' => $order->id,
                     'invoice_code' => $order->invoice_code,
                     'status' => $order->status,
@@ -409,6 +415,9 @@ class OrderController extends Controller
     {
         return [
             'order' => [
+                'user_name' => $order->user_name ?? null,
+                'user_phone' => $order->phone ?? null,
+                'address' => $order->address ?? null,
                 'invoice_code' => $order->invoice_code,
                 'status' => $order->status,
                 'status_change_desc' => $order->status_chnange_desc,
@@ -423,7 +432,7 @@ class OrderController extends Controller
                 'email' => $order->user->email,
                 'phone' => $order->user->phone,
                 'address' => $order->user->address,
-            ],
+            ] ?? null,
             'shipping_address' => $order->shippingAddress ? [
                 'f_name' => $order->shippingAddress->f_name,
                 'l_name' => $order->shippingAddress->l_name,
@@ -461,7 +470,7 @@ class OrderController extends Controller
             }),
             'payments' => $order->payments->map(function ($payment) {
                 return [
-                    'payment_id'=> $payment->id,
+                    'payment_id' => $payment->id,
                     'status' => $payment->status,
                     'amount' => $payment->amount,
                     'paid_amount' => $payment->padi_amount,

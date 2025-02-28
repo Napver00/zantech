@@ -19,7 +19,10 @@ class Order extends Model
         'shipping_chaege',
         'total_amount',
         'coupons_id',
-        'discount'
+        'discount',
+        'user_name',
+        'phone',
+        'address'
     ];
 
     public function orderItems()
