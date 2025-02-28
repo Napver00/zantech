@@ -53,4 +53,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Challan::class, 'user_id');
     }
+
+    // Relationship with Order
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'user_id');
+    }
 }

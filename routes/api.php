@@ -15,6 +15,10 @@ use App\Http\Controllers\BundleItem\BundleItemController;
 use App\Http\Controllers\HeroSection\HeroSectionController;
 use App\Http\Controllers\Document\DocumentController;
 use App\Http\Controllers\Shipping\ShippingController;
+use App\Http\Controllers\Coupon\CouponController;
+use App\Http\Controllers\Order\OrderController;
+use App\Http\Controllers\Payment\PaymentController;
+use App\Http\Controllers\Transition\TransitionController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -120,5 +124,40 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{shipping_id}', [ShippingController::class, 'show']);
         Route::put('/{shipping_id}', [ShippingController::class, 'update']);
         Route::delete('/{shipping_id}', [ShippingController::class, 'destroy']);
+    });
+
+    // Coupon Routes
+    Route::prefix('coupons')->group(function () {
+        Route::post('/', [CouponController::class, 'store']);
+        Route::get('/', [CouponController::class, 'index']);
+        Route::put('/{coupon_id}', [CouponController::class, 'update']);
+        Route::delete('/{coupon_id}', [CouponController::class, 'destroy']);
+    });
+
+    // Order Routes for user
+    Route::prefix('orders')->group(function () {
+        Route::post('/place-order', [OrderController::class, 'placeOrder']);
+        Route::get('/', [OrderController::class, 'userindex']);
+        Route::get('/{order_Id}', [OrderController::class, 'show']);
+    });
+
+    // Order Routes for admin
+    Route::prefix('orders')->group(function () {
+        Route::get('/', [OrderController::class, 'adminindex']);
+        Route::put('/update-status/{order_Id}', [OrderController::class, 'updateStatus']);
+        Route::post('/add-product/{orderId}', [OrderController::class, 'addProductToOrder']);
+        Route::delete('/products/{order_Id}/remove/{product_Id}', [OrderController::class, 'removeProductFromOrder']);
+        Route::put('/products/{order_Id}/update-quantity/{product_Id}', [OrderController::class, 'updateProductQuantity']);
+    });
+
+    // payment routes
+    Route::prefix('paymens')->group(function () {
+        Route::put('/update-status/{paymentId}', [PaymentController::class, 'updatePaymentStatus']);
+        Route::put('/update-padi-amount/{paymentId}', [PaymentController::class, 'updatePadiAmount']);
+    });
+
+    // Transaction routes
+    Route::prefix('transiions')->group(function () {
+        Route::get('/', [TransitionController::class,'index']);
     });
 });
