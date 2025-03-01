@@ -238,12 +238,25 @@ class OrderController extends Controller
     public function adminindex(Request $request)
     {
         try {
-            // Get 'limit' and 'page' from request
+            // Get 'limit', 'page', and 'search' from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
+            $search = $request->input('search');
 
             // Fetch orders in descending order (latest first)
             $query = Order::with('user')->orderBy('created_at', 'desc');
+
+            // Apply search filter if 'search' parameter is provided
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('invoice_code', 'like', '%' . $search . '%')
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', '%' . $search . '%')
+                                ->orWhere('phone', 'like', '%' . $search . '%')
+                                ->orWhere('email', 'like', '%' . $search . '%');
+                        });
+                });
+            }
 
             // Apply pagination only if 'limit' and 'page' are provided
             if ($perPage && $currentPage) {
@@ -306,10 +319,11 @@ class OrderController extends Controller
     public function userindex(Request $request)
     {
         try {
-            // Get 'limit', 'page', and 'user_id' from request
+            // Get 'limit', 'page', 'user_id', and 'search' from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
             $userId = $request->input('user_id');
+            $search = $request->input('search');
 
             // Start with a base query
             $query = Order::with('user')->orderBy('created_at', 'desc');
@@ -317,6 +331,11 @@ class OrderController extends Controller
             // Filter by user_id if provided
             if ($userId) {
                 $query->where('user_id', $userId);
+            }
+
+            // Apply search filter if 'search' parameter is provided
+            if ($search) {
+                $query->where('invoice_code', 'like', '%' . $search . '%');
             }
 
             // Apply pagination only if 'limit' and 'page' are provided

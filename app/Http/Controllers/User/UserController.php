@@ -36,10 +36,23 @@ class UserController extends Controller
     }
 
     // shwo user all information
-    public function shwoAllInfo()
+    public function shwoAllInfo(Request $request)
     {
+
+        // Get 'limit' and 'page' from request, default to null
+        $perPage = $request->input('limit');
+        $currentPage = $request->input('page');
+
         // Fetch all users
-        $users = User::select('id', 'name', 'email', 'phone', 'created_at', 'address')->get();
+        $users = User::select('id', 'name', 'email', 'phone', 'created_at', 'address');
+
+        // Apply pagination if limit and page are provided
+        if ($perPage && $currentPage) {
+            $users = $users->paginate($perPage);
+        } else {
+            // If no pagination is requested, fetch all data
+            $users = $users->get();
+        }
 
         if ($users->isEmpty()) {
             return response()->json([
@@ -89,12 +102,21 @@ class UserController extends Controller
             // Add the current user's data to the array
             $allUsersData[] = $userData;
         }
+        // Prepare pagination data
+        $pagination = $perPage ? [
+            'total_rows' => $users->total(),
+            'current_page' => $users->currentPage(),
+            'per_page' => $users->perPage(),
+            'total_pages' => $users->lastPage(),
+            'has_more_pages' => $users->hasMorePages(),
+        ] : null;
 
         return response()->json([
             'success' => true,
             'status' => 200,
             'message' => 'User information retrieved successfully for all users.',
             'data' => $allUsersData,
+            'pagination' => $pagination,
             'error' => null,
         ], 200);
     }
