@@ -17,4 +17,10 @@ class Payment extends Model
         'trxed',
         'phone'
     ];
+
+    // Relationship with Order
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'order_id');
+    }
 }

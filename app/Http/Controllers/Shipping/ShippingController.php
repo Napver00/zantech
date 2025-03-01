@@ -22,6 +22,7 @@ class ShippingController extends Controller
                 'address' => 'required|string|max:255',
                 'city' => 'required|string|max:255',
                 'zip' => 'required|string|max:10',
+                'User_id'=> 'required|integer'
             ]);
 
             // If validation fails, return error response
@@ -35,12 +36,9 @@ class ShippingController extends Controller
                 ], 400);
             }
 
-            // Get the authenticated user's ID
-            $userId = Auth::id();
-
             // Create the shipping address
             $shippingAddress = ShippingAddress::create([
-                'User_id' => $userId,
+                'User_id' => $request->User_id,
                 'f_name' => $request->f_name,
                 'l_name' => $request->l_name,
                 'phone' => $request->phone,

@@ -19,6 +19,7 @@ use App\Http\Controllers\Coupon\CouponController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Transition\TransitionController;
+use App\Http\Controllers\User\UserController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -159,5 +160,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Transaction routes
     Route::prefix('transiions')->group(function () {
         Route::get('/', [TransitionController::class,'index']);
+    });
+
+    // client routes
+    Route::prefix('clints')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::get('/all-info', [UserController::class, 'shwoAllInfo']);
     });
 });
