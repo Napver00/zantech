@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('products')->group(function () {
         Route::post('/', [ProductController::class, 'store']);
         Route::get('/', [ProductController::class, 'index']);
+        Route::get('/{category_id}', [ProductController::class, 'shwoProductCategory']);
         Route::get('/{product_id}', [ProductController::class, 'show']);
         Route::post('/toggle-status/{product_id}', [ProductController::class, 'toggleStatus']);
         Route::put('/update/{product_id}', [ProductController::class, 'updateProduct']);

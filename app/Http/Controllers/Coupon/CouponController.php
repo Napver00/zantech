@@ -192,18 +192,54 @@ class CouponController extends Controller
     }
 
     // Method to fetch all coupons
-    public function index()
+    public function index(Request $request)
     {
         try {
-            // Fetch all coupons
-            $coupons = Coupon::all();
+            // Get 'limit', 'page', and 'search' from request
+            $perPage = $request->input('limit');
+            $currentPage = $request->input('page');
+            $search = $request->input('search');
 
-            // Return the response in the specified format
+            // Base query to fetch coupons, ordered by 'created_at' in descending order
+            $couponsQuery = Coupon::orderBy('created_at', 'desc');
+
+            // Apply search filter if 'search' parameter is provided
+            if ($search) {
+                $couponsQuery->where('code', 'like', '%' . $search . '%')
+                    ->orWhere('name', 'like', '%' . $search . '%');
+            }
+
+            // If pagination parameters are provided, apply pagination
+            if ($perPage && $currentPage) {
+                $coupons = $couponsQuery->paginate($perPage, ['*'], 'page', $currentPage);
+
+                // Return response with pagination data
+                return response()->json([
+                    'success' => true,
+                    'status' => 200,
+                    'message' => 'Coupons retrieved successfully.',
+                    'data' => $coupons->items(),
+                    'pagination' => [
+                        'total_rows' => $coupons->total(),
+                        'current_page' => $coupons->currentPage(),
+                        'per_page' => $coupons->perPage(),
+                        'total_pages' => $coupons->lastPage(),
+                        'has_more_pages' => $coupons->hasMorePages(),
+                    ],
+                    'errors' => null,
+                ], 200);
+            }
+
+            // If no pagination parameters, fetch all records without pagination
+            $coupons = $couponsQuery->get();
+
+            // Return the response with all coupons
             return response()->json([
                 'success' => true,
                 'status' => 200,
                 'message' => 'Coupons retrieved successfully.',
                 'data' => $coupons,
+                'pagination' => null,
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {

@@ -76,8 +76,10 @@ class WishlistController extends Controller
         $perPage = $request->input('limit');
         $currentPage = $request->input('page');
 
-        // Fetch wishlist items for the user with product details
-        $wishlistQuery = Wishlist::where('user_id', $user_id)->with('product.images');
+        // Fetch wishlist items for the user with product details, sorted by created_at descending
+        $wishlistQuery = Wishlist::where('user_id', $user_id)
+            ->with('product.images')
+            ->orderBy('created_at', 'desc'); 
 
         // Check if pagination parameters are provided
         if ($perPage && $currentPage) {
@@ -127,6 +129,7 @@ class WishlistController extends Controller
             'error' => null,
         ], 200);
     }
+
 
     // remove items from wishlist
     public function destroy($wishlist_id)

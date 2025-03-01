@@ -11,6 +11,7 @@ use App\Models\File;
 use App\Models\Tag;
 use App\Models\BundleItem;
 use App\Models\Cetagory_Product_list;
+use App\Models\Cetagory;
 
 class ProductController extends Controller
 {
@@ -221,14 +222,30 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get 'limit' and 'page' from request
+            // Get 'limit', 'page', 'search', 'min_price', and 'max_price' from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
+            $search = $request->input('search');
+            $minPrice = $request->input('min_price');
+            $maxPrice = $request->input('max_price');
 
             // Base query to fetch products with one image and order by 'created_at' in descending order
             $query = Item::with(['images' => function ($query) {
                 $query->select('relatable_id', 'path')->take(1);
             }])->orderBy('created_at', 'desc');
+
+            // Apply search filter if 'search' parameter is provided
+            if ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            }
+
+            // Apply price range filter if 'min_price' and 'max_price' are provided
+            if ($minPrice) {
+                $query->where('price', '>=', $minPrice);
+            }
+            if ($maxPrice) {
+                $query->where('price', '<=', $maxPrice);
+            }
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {
@@ -239,7 +256,7 @@ class ProductController extends Controller
                         'status' => 400,
                         'message' => 'Invalid pagination parameters.',
                         'data' => null,
-                        'errors'=> 'Invalid pagination parameters.',
+                        'errors' => 'Invalid pagination parameters.',
                     ], 400);
                 }
 
@@ -317,6 +334,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
 
     // Toggles the product status
     public function toggleStatus($product_id)
@@ -497,6 +515,125 @@ class ProductController extends Controller
                 'message' => 'An error occurred while deleting the product and related data.',
                 'data' => null,
                 'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // shwo product by category id
+    public function shwoProductCategory($category_id, Request $request)
+    {
+        try {
+            // Get 'limit' and 'page' from request
+            $perPage = $request->input('limit');
+            $currentPage = $request->input('page');
+
+            // Fetch the category
+            $category = Cetagory::find($category_id);
+
+            if (!$category) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Category not found.',
+                    'data' => null,
+                    'errors' => 'Category not found.',
+                ], 404);
+            }
+
+            // Fetch product IDs associated with the category
+            $productIds = Cetagory_Product_list::where('category_id', $category_id)
+                ->pluck('item_id');
+
+            // Fetch products with one image and order by 'created_at' in descending order
+            $query = Item::with(['images' => function ($query) {
+                $query->select('relatable_id', 'path')->take(1);
+            }])->whereIn('id', $productIds)
+                ->orderBy('created_at', 'desc');
+
+            // If pagination parameters are provided, apply pagination
+            if ($perPage && $currentPage) {
+                // Validate pagination parameters
+                if (!is_numeric($perPage) || !is_numeric($currentPage) || $perPage <= 0 || $currentPage <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'status' => 400,
+                        'message' => 'Invalid pagination parameters.',
+                        'data' => null,
+                        'errors' => 'Invalid pagination parameters.',
+                    ], 400);
+                }
+
+                // Apply pagination
+                $products = $query->paginate($perPage, ['*'], 'page', $currentPage);
+
+                // Format the response with pagination data
+                $formattedProducts = $products->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'description' => $product->description,
+                        'short_description' => $product->short_description,
+                        'status' => $product->status,
+                        'quantity' => $product->quantity,
+                        'price' => $product->price,
+                        'discount' => $product->discount,
+                        'image_path' => $product->images->isNotEmpty()
+                            ? asset('storage/' . str_replace('public/', '', $product->images->first()->path))
+                            : null,
+                    ];
+                });
+
+                // Return response with pagination data
+                return response()->json([
+                    'success' => true,
+                    'status' => 200,
+                    'message' => 'Products retrieved successfully for category: ' . $category->name,
+                    'data' => $formattedProducts,
+                    'pagination' => [
+                        'total_rows' => $products->total(),
+                        'current_page' => $products->currentPage(),
+                        'per_page' => $products->perPage(),
+                        'total_pages' => $products->lastPage(),
+                        'has_more_pages' => $products->hasMorePages(),
+                    ]
+                ], 200);
+            }
+
+            // If no pagination parameters, fetch all records without pagination
+            $products = $query->get();
+
+            // Format the response
+            $formattedProducts = $products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'description' => $product->description,
+                    'short_description' => $product->short_description,
+                    'status' => $product->status,
+                    'quantity' => $product->quantity,
+                    'price' => $product->price,
+                    'discount' => $product->discount,
+                    'image_path' => $product->images->isNotEmpty()
+                        ? asset('storage/' . str_replace('public/', '', $product->images->first()->path))
+                        : null,
+                ];
+            });
+
+            // Return response without pagination links
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Products retrieved successfully for category: ' . $category->name,
+                'data' => $formattedProducts
+            ], 200);
+        } catch (\Exception $e) {
+            // Handle any exceptions
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while retrieving products.',
+                'data' => null,
+                'errors' => $e->getMessage()
             ], 500);
         }
     }

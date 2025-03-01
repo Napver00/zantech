@@ -58,12 +58,21 @@ class SupplierController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get 'limit' and 'page' from request
+            // Get 'limit', 'page', and 'search' from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
+            $search = $request->input('search');
 
             // Base query to fetch suppliers with descending order by 'created_at'
             $query = Supplier::query()->orderBy('created_at', 'desc');
+
+            // Apply search filter if 'search' parameter is provided
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('phone', 'like', '%' . $search . '%');
+                });
+            }
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {
@@ -118,6 +127,7 @@ class SupplierController extends Controller
             ], 500);
         }
     }
+
 
     // shwo single supplier
     public function show($id)

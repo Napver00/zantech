@@ -190,12 +190,21 @@ class ChallanController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get 'limit' and 'page' from request
+            // Get 'limit', 'page', and 'search' from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
+            $search = $request->input('search');
 
             // Base query to fetch challans with supplier information, ordered by descending order
             $query = Challan::with('supplier')->orderBy('id', 'desc');
+
+            // Apply search filter if 'search' parameter is provided
+            if ($search) {
+                $query->whereHas('supplier', function ($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('phone', 'like', '%' . $search . '%');
+                });
+            }
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {

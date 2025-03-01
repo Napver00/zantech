@@ -65,12 +65,18 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get 'limit' and 'page' from request
+            // Get 'limit', 'page', and 'search' from the request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
+            $search = $request->input('search');
 
             // Base query to fetch categories with descending order by 'created_at'
             $query = Category::query()->orderBy('created_at', 'desc');
+
+            // Apply search filter if 'search' parameter is provided
+            if ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            }
 
             // If pagination parameters are provided, apply pagination
             if ($perPage && $currentPage) {
@@ -81,7 +87,7 @@ class CategoryController extends Controller
                         'status' => 400,
                         'message' => 'Invalid pagination parameters.',
                         'data' => null,
-                        'errors'=> 'Invalid pagination parameters.',
+                        'errors' => 'Invalid pagination parameters.',
                     ], 400);
                 }
 
@@ -125,6 +131,7 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+
     /**
      * Retrieve a single category by ID.
      */
