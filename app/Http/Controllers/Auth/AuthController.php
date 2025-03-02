@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Mail\VerifyEmail;
 
 class AuthController extends Controller
 {
@@ -183,12 +186,15 @@ class AuthController extends Controller
 
             // If validation fails, return error response
             if ($validator->fails()) {
+                // Get the first error message
+                $errorMessage = $validator->errors()->first();
+
                 return response()->json([
                     'success' => false,
                     'status' => 422,
                     'message' => 'Validation failed.',
                     'data' => null,
-                    'errors' => $validator->errors(),
+                    'errors' => $errorMessage, 
                 ], 422);
             }
 
@@ -202,11 +208,14 @@ class AuthController extends Controller
                 'status' => 1,
             ]);
 
+            // Send the verification email
+            Mail::to($user->email)->send(new VerifyEmail($user));
+
             // Return success response
             return response()->json([
                 'success' => true,
                 'status' => 201,
-                'message' => 'User registered successfully.',
+                'message' => 'User registered successfully. Please check your email to verify your account.',
                 'data' => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -229,6 +238,7 @@ class AuthController extends Controller
         }
     }
 
+
     // user login
     public function Userlogin(Request $request)
     {
@@ -246,7 +256,7 @@ class AuthController extends Controller
                     'status' => 422,
                     'message' => 'Validation failed.',
                     'data' => null,
-                    'errors' => $validator->errors(),
+                    'errors' => $validator->errors()->first(), // Return the first error message as a string
                 ], 422);
             }
 
@@ -262,6 +272,17 @@ class AuthController extends Controller
                         'message' => 'Access denied. Only users can log in.',
                         'data' => null,
                         'errors' => 'Access denied. Only users can log in.',
+                    ], 403);
+                }
+
+                // Check if the user's email is verified
+                if (!$user->hasVerifiedEmail()) {
+                    return response()->json([
+                        'success' => false,
+                        'status' => 403,
+                        'message' => 'Email not verified. Please verify your email to log in.',
+                        'data' => null,
+                        'errors' => 'Email not verified.',
                     ], 403);
                 }
 
@@ -412,5 +433,18 @@ class AuthController extends Controller
                 'errors' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    // email varifications
+    public function verifyEmail(EmailVerificationRequest $request)
+    {
+        $request->fulfill();
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'Email verified successfully.',
+            'errors' => null,
+        ], 200);
     }
 }

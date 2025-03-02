@@ -97,6 +97,7 @@ class Handler extends ExceptionHandler
         ], 500);
     }
 
+
     /**
      * Convert a validation exception into a JSON response.
      *
@@ -117,4 +118,6 @@ class Handler extends ExceptionHandler
             'errors' => $errorMessage,
         ], 422);
     }
+
+
 }

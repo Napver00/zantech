@@ -21,7 +21,7 @@ use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Transition\TransitionController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Wishlist\WishlistController;
-
+use App\Http\Controllers\Email\EmailController;
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -32,6 +32,12 @@ Route::prefix('users')->group(function () {
     Route::post('/login', [AuthController::class, 'Userlogin']);
 });
 
+// Email varifications
+Route::get('/email/verify/{id}/{hash}', [EmailController::class, 'verify'])
+    ->name('verification.verify');
+
+Route::post('/email/resend-verification', [EmailController::class, 'resendVerificationEmail'])
+    ->name('verification.resend');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
