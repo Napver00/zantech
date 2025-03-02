@@ -8,6 +8,10 @@ use App\Models\User;
 use App\Models\ShippingAddress;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Activity;
+use App\Models\Expense;
+use App\Models\Coupon;
+
 
 class UserController extends Controller
 {
@@ -119,5 +123,67 @@ class UserController extends Controller
             'pagination' => $pagination,
             'error' => null,
         ], 200);
+    }
+
+    // Shwo all active
+    public function getActivities(Request $request)
+    {
+        try {
+            $perPage = $request->input('limit');
+            $currentPage = $request->input('page');
+
+            // Base query to fetch activities with eager loading of user
+            $query = Activity::with('user')->orderBy('created_at', 'desc');
+
+            if ($perPage && $currentPage) {
+                // Validate pagination parameters
+                if (!is_numeric($perPage) || !is_numeric($currentPage) || $perPage <= 0 || $currentPage <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'status' => 400,
+                        'message' => 'Invalid pagination parameters.',
+                        'data' => null,
+                        'errors' => 'Invalid pagination parameters.',
+                    ], 400);
+                }
+
+                // Apply pagination
+                $activities = $query->paginate($perPage, ['*'], 'page', $currentPage);
+
+                // Return response with pagination data
+                return response()->json([
+                    'success' => true,
+                    'status' => 200,
+                    'message' => 'Activities retrieved successfully.',
+                    'data' => $activities->items(),
+                    'pagination' => [
+                        'total_rows' => $activities->total(),
+                        'current_page' => $activities->currentPage(),
+                        'per_page' => $activities->perPage(),
+                        'total_pages' => $activities->lastPage(),
+                        'has_more_pages' => $activities->hasMorePages(),
+                    ]
+                ], 200);
+            }
+
+            // If no pagination parameters, fetch all records without pagination
+            $activities = $query->get();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Activities retrieved successfully.',
+                'data' => $activities
+            ], 200);
+        } catch (\Exception $e) {
+            // Handle any exceptions that occur
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while retrieving activities.',
+                'data' => null,
+                'errors' => $e->getMessage()
+            ], 500);
+        }
     }
 }

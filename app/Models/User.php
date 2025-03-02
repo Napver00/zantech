@@ -59,4 +59,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class, 'user_id');
     }
+    // Define relationship with Activity
+    public function activities()
+    {
+        return $this->hasMany(Activity::class);
+    }
 }

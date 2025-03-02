@@ -15,6 +15,8 @@ use App\Models\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
+use App\Models\Activity;
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
@@ -527,6 +529,14 @@ class OrderController extends Controller
                 'status_chnange_desc' => $statusChangeDesc,
             ]);
 
+            // Save activity
+            Activity::create([
+                'relatable_id' => $orderId,
+                'type' => 'order',
+                'user_id' => Auth::id(),
+                'description' => $statusChangeDesc,
+            ]);
+
             // Return success response
             return response()->json([
                 'success' => true,
@@ -580,6 +590,14 @@ class OrderController extends Controller
                 $payment->amount -= $amountToDeduct;
                 $payment->save();
             }
+
+            // Save activity
+            Activity::create([
+                'relatable_id' => $orderId,
+                'type' => 'order',
+                'user_id' => Auth::id(),
+                'description' => 'remove new product in : ' . $orderId,
+            ]);
 
             // Commit the transaction
             DB::commit();
@@ -675,6 +693,14 @@ class OrderController extends Controller
                 $payment->amount += $amountDifference;
                 $payment->save();
             }
+
+            // Save activity
+            Activity::create([
+                'relatable_id' => $orderId,
+                'type' => 'order',
+                'user_id' => Auth::id(),
+                'description' =>  'Update product quantity: ' . $oldTotal . ' to ' . $newTotal,
+            ]);
 
             // Commit the transaction
             DB::commit();
@@ -785,6 +811,14 @@ class OrderController extends Controller
                 $payment->amount += $amountDifference;
                 $payment->save();
             }
+
+            // Save activity
+            Activity::create([
+                'relatable_id' => $orderId,
+                'type' => 'order',
+                'user_id' => Auth::id(),
+                'description' => 'add new product in : ' . $orderId
+            ]);
 
             // Commit the transaction
             DB::commit();

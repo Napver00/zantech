@@ -53,4 +53,10 @@ class Order extends Model
     {
         return $this->hasMany(Payment::class, 'order_id');
     }
+
+    // Relationship with Activity model
+    public function activities()
+    {
+        return $this->hasMany(Activity::class, 'relatable_id');
+    }
 }

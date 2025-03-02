@@ -176,4 +176,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{user_id}', [WishlistController::class, 'show']);
         Route::delete('/{wishlist_id}', [WishlistController::class, 'destroy']);
     });
+
+    // Activity
+    Route::prefix('activitys')->group(function () {
+        Route::get('/', [UserController::class, 'getActivities']);
+    });
 });

@@ -23,4 +23,10 @@ class Payment extends Model
     {
         return $this->belongsTo(Order::class, 'order_id');
     }
+
+    // Relationship with Activity model
+    public function activities()
+    {
+        return $this->hasMany(Activity::class, 'relatable_id');
+    }
 }

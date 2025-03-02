@@ -7,6 +7,9 @@ use App\Models\Payment;
 use App\Models\Transition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
+use App\Models\Activity;
+use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
@@ -48,6 +51,15 @@ class PaymentController extends Controller
                     'amount' => $payment->padi_amount,
                 ]);
             }
+
+            // Save activity
+            Activity::create([
+                'relatable_id' => $paymentId,
+                'type' => 'payment',
+                'user_id' => Auth::id(),
+                'description' => 'update payment status : ' . $payment->status . 'to' . $request->input('status'),
+            ]);
+
 
             // Commit the transaction
             DB::commit();
@@ -114,6 +126,15 @@ class PaymentController extends Controller
             // Update the padi_amount
             $payment->padi_amount = $request->input('padi_amount');
             $payment->save();
+
+
+            // Save activity
+            Activity::create([
+                'relatable_id' => $paymentId,
+                'type' => 'payment',
+                'user_id' => Auth::id(),
+                'description' => 'update payment amount : ' . $payment->padi_amount . 'to' . $request->input('padi_amount'),
+            ]);
 
             // Commit the transaction
             DB::commit();

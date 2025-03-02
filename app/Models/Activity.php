@@ -15,4 +15,16 @@ class Activity extends Model
         'user_id',
         'description',
     ];
+
+    // Relationship with User
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Dynamic relation for different types (Expense, Coupon, Order, Payment)
+    public function relatable()
+    {
+        return $this->morphTo();
+    }
 }
