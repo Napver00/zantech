@@ -234,6 +234,9 @@ class ProductController extends Controller
                 $query->select('relatable_id', 'path')->take(1);
             }])->orderBy('created_at', 'desc');
 
+            // Exclude items with status 0
+            $query->where('status', '!=', 0);
+
             // Apply search filter if 'search' parameter is provided
             if ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
@@ -334,7 +337,6 @@ class ProductController extends Controller
             ], 500);
         }
     }
-
 
     // Toggles the product status
     public function toggleStatus($product_id)
@@ -520,7 +522,7 @@ class ProductController extends Controller
     }
 
     // shwo product by category id
-    public function shwoProductCategory($category_id, Request $request)
+    public function showProductCategory($category_id, Request $request)
     {
         try {
             // Get 'limit' and 'page' from request
@@ -548,6 +550,7 @@ class ProductController extends Controller
             $query = Item::with(['images' => function ($query) {
                 $query->select('relatable_id', 'path')->take(1);
             }])->whereIn('id', $productIds)
+                ->where('status', '!=', 0)
                 ->orderBy('created_at', 'desc');
 
             // If pagination parameters are provided, apply pagination

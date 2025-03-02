@@ -144,17 +144,17 @@ class ChallanController extends Controller
                 'Date' => $challan->Date,
                 'total' => $challan->total,
                 'delivery_price' => $challan->delivery_price,
-                'supplier' => [
+                'supplier' => $challan->supplier ? [
                     'name' => $challan->supplier->name,
                     'phone' => $challan->supplier->phone,
                     'address' => $challan->supplier->address,
-                ],
+                ] : null,
                 'user' => [
                     'name' => $challan->user->name,
                 ],
                 'items' => $challan->supplierItems->map(function ($item) {
                     return [
-                        'item_id' => $item->item_id,
+                        'item_id' => $item->item_id ?: null,
                         'item_name' => $item->item->name,
                         'price' => $item->price,
                         'quantity' => $item->quantity,
@@ -228,11 +228,11 @@ class ChallanController extends Controller
                         'Date' => $challan->Date,
                         'total' => $challan->total,
                         'delivery_price' => $challan->delivery_price,
-                        'supplier' => [
+                        'supplier' => $challan->supplier ? [
                             'name' => $challan->supplier->name,
                             'phone' => $challan->supplier->phone,
                             'address' => $challan->supplier->address,
-                        ],
+                        ] : null,
                     ];
                 });
 

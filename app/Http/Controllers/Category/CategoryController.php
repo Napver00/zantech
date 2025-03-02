@@ -73,6 +73,9 @@ class CategoryController extends Controller
             // Base query to fetch categories with descending order by 'created_at'
             $query = Category::query()->orderBy('created_at', 'desc');
 
+            // Exclude categories with status 0
+            $query->where('status', '!=', 0);
+
             // Apply search filter if 'search' parameter is provided
             if ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
@@ -131,6 +134,7 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Retrieve a single category by ID.
