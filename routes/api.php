@@ -157,6 +157,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/place-order', [OrderController::class, 'placeOrder']);
         Route::get('/', [OrderController::class, 'userindex']);
         Route::get('/{order_Id}', [OrderController::class, 'show']);
+        Route::post('/sendOrderEmails/{order_Id}', [OrderController::class, 'sendOrderEmails']);
     });
 
     // Order Routes for admin

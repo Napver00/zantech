@@ -246,8 +246,21 @@ class OrderController extends Controller
     }
 
     // Send order emails
-    private function sendOrderEmails($order)
+    public function sendOrderEmails($order_Id)
     {
+        // Fetch the order by ID
+        $order = Order::find($order_Id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Order not found',
+                'data' => null,
+                'errors' => 'Order not found',
+            ], 404);
+        }
+
         // Fetch all order info using the show function
         $orderDetailsResponse = $this->show($order->id);
 
@@ -262,12 +275,26 @@ class OrderController extends Controller
 
             // Send email to the admin
             Mail::to('zantechbd@gmail.com')->send(new OrderPlacedMail($orderDetails, true));
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Emails sent successfully',
+                'data' => null,
+            ], 200);
         } else {
             // Handle failure if the order details could not be fetched
             Log::error('Failed to fetch order details for email: ' . $order->id);
+
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Failed to fetch order details',
+                'data' => null,
+                'errors' => 'Failed to fetch order details',
+            ], 500);
         }
     }
-
     // shwo all orders for admin page
     public function adminindex(Request $request)
     {
