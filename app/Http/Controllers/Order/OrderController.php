@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
 use App\Models\Activity;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderPlacedMail;
+use Illuminate\Support\Facades\Log;
+
 
 class OrderController extends Controller
 {
@@ -48,6 +52,9 @@ class OrderController extends Controller
             $this->createPayment($order, $request);
 
             DB::commit();
+
+            // Send email notifications
+            $this->sendOrderEmails($order);
 
             // Return success response
             return $this->successResponse($order, 'Order placed successfully.');
@@ -234,6 +241,29 @@ class OrderController extends Controller
             'data' => null,
             'errors' => $errorMessage,
         ], 500);
+    }
+
+    // Send order emails
+    private function sendOrderEmails($order)
+    {
+        // Fetch all order info using the show function
+        $orderDetailsResponse = $this->show($order->id);
+
+        if ($orderDetailsResponse->getStatusCode() == 200) {
+            // Get the order data from the response
+            $orderDetails = $orderDetailsResponse->getData()->data;
+
+            // Send email to the customer if they provided an email
+            if ($order->user_id && $order->user->email) {
+                Mail::to($order->user->email)->send(new OrderPlacedMail($orderDetails));
+            }
+
+            // Send email to the admin
+            Mail::to('zantechbd@gmail.com')->send(new OrderPlacedMail($orderDetails, true));
+        } else {
+            // Handle failure if the order details could not be fetched
+            Log::error('Failed to fetch order details for email: ' . $order->id);
+        }
     }
 
     // shwo all orders for admin page
