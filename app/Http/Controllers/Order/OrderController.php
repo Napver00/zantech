@@ -19,7 +19,9 @@ use App\Models\Activity;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderPlacedMail;
+use App\Events\OrderPlaced;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SendOrderEmailsJob;
 
 
 class OrderController extends Controller
@@ -53,8 +55,8 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // Send email notifications
-            $this->sendOrderEmails($order);
+            // Dispatch the job to send emails asynchronously
+            dispatch(new SendOrderEmailsJob($order));
 
             // Return success response
             return $this->successResponse($order, 'Order placed successfully.');
