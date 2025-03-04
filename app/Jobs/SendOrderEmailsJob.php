@@ -16,10 +16,12 @@ class SendOrderEmailsJob implements ShouldQueue
     use InteractsWithQueue, Queueable, SerializesModels;
 
     protected $order;
+    protected $additionalEmails;
 
-    public function __construct(Order $order)
+    public function __construct(Order $order, array $additionalEmails = [])
     {
         $this->order = $order;
+        $this->additionalEmails = $additionalEmails;
     }
 
     public function handle()
@@ -38,6 +40,11 @@ class SendOrderEmailsJob implements ShouldQueue
 
             // Send email to the admin
             Mail::to('zantechbd@gmail.com')->send(new OrderPlacedMail($orderDetails, true));
+
+            // Send emails to additional addresses
+            foreach ($this->additionalEmails as $email) {
+                Mail::to($email)->send(new OrderPlacedMail($orderDetails, true));
+            }
         } else {
             // Handle failure if the order details could not be fetched
             Log::error('Failed to fetch order details for email: ' . $this->order->id);

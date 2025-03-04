@@ -50,12 +50,22 @@ class AuthController extends Controller
                 'errors' => null,
             ], 201);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to register user. Please try again later.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -97,12 +107,22 @@ class AuthController extends Controller
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to process login. Please try again later.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -123,12 +143,22 @@ class AuthController extends Controller
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to log out. Please try again later.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -161,12 +191,22 @@ class AuthController extends Controller
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to retrieve user profile. Please try again later.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -194,7 +234,7 @@ class AuthController extends Controller
                     'status' => 422,
                     'message' => 'Validation failed.',
                     'data' => null,
-                    'errors' => $errorMessage, 
+                    'errors' => $errorMessage,
                 ], 422);
             }
 
@@ -227,13 +267,23 @@ class AuthController extends Controller
                 'errors' => null,
             ], 201);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'An error occurred while registering the user.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -316,13 +366,23 @@ class AuthController extends Controller
                 'errors' => 'Invalid email or password.',
             ], 401);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'An error occurred while logging in.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -375,13 +435,23 @@ class AuthController extends Controller
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             // Handle errors and return a consistent error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to change password.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -424,13 +494,23 @@ class AuthController extends Controller
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             // Handle errors and return a consistent error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to update user info.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }

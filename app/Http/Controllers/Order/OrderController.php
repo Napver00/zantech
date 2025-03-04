@@ -245,8 +245,8 @@ class OrderController extends Controller
         ], 500);
     }
 
-    // Send order emails
-    public function sendOrderEmails($order_Id)
+    // Resend order emails
+    public function sendOrderEmails(Request $request, $order_Id)
     {
         // Fetch the order by ID
         $order = Order::find($order_Id);
@@ -261,40 +261,19 @@ class OrderController extends Controller
             ], 404);
         }
 
-        // Fetch all order info using the show function
-        $orderDetailsResponse = $this->show($order->id);
+        // Get additional email addresses from the request
+        $additionalEmails = $request->input('emails', []); // Expecting an array of emails
 
-        if ($orderDetailsResponse->getStatusCode() == 200) {
-            // Get the order data from the response
-            $orderDetails = $orderDetailsResponse->getData()->data;
+        dispatch(new SendOrderEmailsJob($order, $additionalEmails));
 
-            // Send email to the customer if they provided an email
-            if ($order->user_id && $order->user->email) {
-                Mail::to($order->user->email)->send(new OrderPlacedMail($orderDetails));
-            }
-
-            // Send email to the admin
-            Mail::to('zantechbd@gmail.com')->send(new OrderPlacedMail($orderDetails, true));
-
-            return response()->json([
-                'success' => true,
-                'status' => 200,
-                'message' => 'Emails sent successfully',
-                'data' => null,
-            ], 200);
-        } else {
-            // Handle failure if the order details could not be fetched
-            Log::error('Failed to fetch order details for email: ' . $order->id);
-
-            return response()->json([
-                'success' => false,
-                'status' => 500,
-                'message' => 'Failed to fetch order details',
-                'data' => null,
-                'errors' => 'Failed to fetch order details',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'Emails are being sent in the background',
+            'data' => null,
+        ], 200);
     }
+
     // shwo all orders for admin page
     public function adminindex(Request $request)
     {
@@ -365,13 +344,23 @@ class OrderController extends Controller
             // Return the response as JSON
             return response()->json($response, 200);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             // Handle exceptions and return error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to fetch orders.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -445,13 +434,23 @@ class OrderController extends Controller
             // Return the response as JSON
             return response()->json($response, 200);
         } catch (\Exception $e) {
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             // Handle exceptions and return error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to fetch orders.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage,
             ], 500);
         }
     }
@@ -782,14 +781,23 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             // Rollback the transaction in case of error
             DB::rollBack();
+            // Extract only the main error message
+            $errorMessage = $e->getMessage();
 
+            // Check if it's a SQL Integrity Constraint Violation
+            if (str_contains($errorMessage, 'Integrity constraint violation')) {
+                preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+                if (!empty($matches)) {
+                    $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
+                }
+            }
             // Handle exceptions and return error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to update product quantity and price.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => $errorMessage
             ], 500);
         }
     }
