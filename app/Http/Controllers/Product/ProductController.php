@@ -525,7 +525,7 @@ class ProductController extends Controller
     }
 
     // shwo product by category id
-    public function showProductCategory($category_id, Request $request)
+    public function shwoProductCategory($category_id, Request $request)
     {
         try {
             // Get 'limit' and 'page' from request
