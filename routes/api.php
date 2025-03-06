@@ -78,6 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/add-tags/{product_id}', [TagController::class, 'addTags']);
         Route::delete('/remove-tags/{product_id}', [TagController::class, 'removeTags']);
         Route::post('/add-images/{product_id}', [FileController::class, 'addImagesProduct']);
+        Route::get('/files/image', [FileController::class, 'getProductFiles']);
         Route::delete('/remove-image/{product_id}', [FileController::class, 'removePeoductImage']);
         Route::prefix('bundles')->group(function () {
             Route::post('/{bundleId}', [BundleItemController::class, 'addItemsToBundle']);

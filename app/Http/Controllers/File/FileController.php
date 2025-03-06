@@ -11,14 +11,44 @@ use Illuminate\Support\Facades\Storage;
 
 class FileController extends Controller
 {
+
+    // shwo all product image
+    public function getProductFiles()
+    {
+        $files = File::where('type', 'product')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->unique('path')
+            ->values();
+
+        if ($files->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'No product files found.',
+                'data' => null,
+                'errors' => null
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'Product files retrieved successfully.',
+            'data' => $files,
+            'errors' => null
+        ], 200);
+    }
+
     // Add image in product
     public function addImagesProduct(Request $request, $product_id)
     {
         try {
             // Validate the request data
             $validator = Validator::make($request->all(), [
-                'images' => 'required|array',
+                'images' => 'sometimes|array',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:4048',
+                'file_id' => 'sometimes|exists:files,id'
             ]);
 
             // If validation fails, return error response
@@ -46,8 +76,21 @@ class FileController extends Controller
                 ], 404);
             }
 
-            // Save images
-            if ($request->has('images')) {
+            // If file_id is provided, use the existing image path
+            if ($request->has('file_id')) {
+                $existingFile = File::find($request->file_id);
+
+                if ($existingFile) {
+                    File::create([
+                        'relatable_id' => $product_id,
+                        'type' => 'product',
+                        'path' => $existingFile->path,
+                    ]);
+                }
+            }
+
+            // If new images are uploaded, process and save them
+            if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
                     // Store the image in the storage folder
                     $path = $image->store('public/product_image');
@@ -80,6 +123,7 @@ class FileController extends Controller
             ], 500);
         }
     }
+
 
     // Remove images from the product
     public function removePeoductImage(Request $request, $product_id)
