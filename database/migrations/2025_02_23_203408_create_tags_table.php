@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->Integer('item_id');
             $table->string('tag');
+            $table->string('slug')->nullable();
             $table->timestamps();
         });
     }

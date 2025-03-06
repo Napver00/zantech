@@ -12,6 +12,7 @@ use App\Models\Tag;
 use App\Models\BundleItem;
 use App\Models\Cetagory_Product_list;
 use App\Models\Cetagory;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -89,6 +90,7 @@ class ProductController extends Controller
                     Tag::create([
                         'item_id' => $product->id,
                         'tag' => $tag,
+                        'slug' => Str::slug($tag),
                     ]);
                 }
             }
@@ -171,6 +173,7 @@ class ProductController extends Controller
                     return [
                         'id' => $tag->id,
                         'tag' => $tag->tag,
+                        'slug'=> $tag->slug,
                     ];
                 }),
                 'images' => $product->images->map(function ($image) {

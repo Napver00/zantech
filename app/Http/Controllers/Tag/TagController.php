@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Item;
 use App\Models\Tag;
+use Illuminate\Support\Str;
 
 // Add tags in product
 class TagController extends Controller
@@ -51,6 +52,7 @@ class TagController extends Controller
                 Tag::create([
                     'item_id' => $product_id,
                     'tag' => $tag,
+                    'slug' => Str::slug($tag),
                 ]);
             }
 
@@ -80,7 +82,7 @@ class TagController extends Controller
         try {
             // Validate the request data
             $validator = Validator::make($request->all(), [
-                'tag_ids' => 'required|array', 
+                'tag_ids' => 'required|array',
                 'tag_ids.*' => 'exists:tags,id',
             ]);
 

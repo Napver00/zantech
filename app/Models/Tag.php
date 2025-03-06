@@ -11,6 +11,7 @@ class Tag extends Model
     protected $fillable = [
         'item_id',
         'tag',
+        'slug'
     ];
 
     // Relationship with Item (product)
