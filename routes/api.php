@@ -1,6 +1,5 @@
 <?php
 
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Category\CategoryController;
@@ -23,6 +22,8 @@ use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Wishlist\WishlistController;
 use App\Http\Controllers\Email\EmailController;
 use App\Http\Controllers\Passwort\ForgotPasswordController;
+use App\Http\Controllers\Dashboard\AdminDashboardController;
+
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -38,7 +39,6 @@ Route::get('/email/verify/{id}/{hash}', [EmailController::class, 'verify'])
 
 Route::post('/email/resend-verification', [EmailController::class, 'resendVerificationEmail'])
     ->name('verification.resend');
-
 
 // Forgot Password
 Route::post('/password/forgot', [ForgotPasswordController::class, 'forgotPassword'])
@@ -194,8 +194,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{wishlist_id}', [WishlistController::class, 'destroy']);
     });
 
-    // Activity
+    // Activity routes
     Route::prefix('activitys')->group(function () {
         Route::get('/', [UserController::class, 'getActivities']);
     });
+
+    // Admin dashboard routes
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'adminDashboard']);
 });
