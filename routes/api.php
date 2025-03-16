@@ -23,6 +23,7 @@ use App\Http\Controllers\Wishlist\WishlistController;
 use App\Http\Controllers\Email\EmailController;
 use App\Http\Controllers\Passwort\ForgotPasswordController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
+use App\Http\Controllers\Report\ReportController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -201,4 +202,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin dashboard routes
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'adminDashboard']);
+
+    // reposts routes
+    Route::prefix('reports')->group(function () {
+
+    });
 });
