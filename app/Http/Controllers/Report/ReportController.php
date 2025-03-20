@@ -3,103 +3,118 @@
 namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
+use App\Services\ReportService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\Expense;
-use App\Models\Transition;
 
 class ReportController extends Controller
 {
-    //Monthly total of expense
-    public function getExpenseMonthly()
+    /**
+     * @var ReportService
+     */
+    private ReportService $reportService;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param ReportService $reportService
+     */
+    public function __construct(ReportService $reportService)
+    {
+        $this->reportService = $reportService;
+    }
+
+    /**
+     * Get monthly expense totals.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getExpenseMonthly(Request $request): JsonResponse
     {
         try {
-            // Query to group expenses by month and calculate the total amount for each month
-            $monthlyTotals = Expense::select(
-                DB::raw('YEAR(date) as year'),
-                DB::raw('MONTH(date) as month'),
-                DB::raw('SUM(amount) as total_amount')
-            )
-                ->groupBy('year', 'month')
-                ->orderBy('year', 'desc')
-                ->orderBy('month', 'desc')
-                ->get();
+            $monthlyTotals = $this->reportService->getMonthlyExpenseTotals();
 
-            // Format the response
-            $formattedResults = $monthlyTotals->map(function ($item) {
-                return [
-                    'year' => $item->year,
-                    'month' => $item->month,
-                    'total_amount' => $item->total_amount,
-                ];
-            });
-
-            // Return the response as JSON
-            return response()->json([
-                'success' => true,
-                'status' => 200,
-                'message' => 'Monthly total expenses retrieved successfully.',
-                'data' => $formattedResults,
-            ]);
+            return $this->successResponse(
+                'Monthly total expenses retrieved successfully.',
+                $monthlyTotals
+            );
         } catch (\Exception $e) {
-            // Log the error for debugging purposes
-            Log::error('Error in getMonthlyTotal: ' . $e->getMessage());
+            Log::error('Error in getExpenseMonthly: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
 
-            // Return a generic error response
-            return response()->json([
-                'success' => false,
-                'status' => 500,
-                'message' => 'An error occurred while retrieving monthly total expenses.',
-                'data' => null,
-                'errors' => $e->getMessage(),
-            ], 500);
+            return $this->errorResponse(
+                'An error occurred while retrieving monthly total expenses.',
+                $e->getMessage()
+            );
         }
     }
 
-    // Monthly total of Transition
-    public function getMonthlyTransition()
+    /**
+     * Get monthly transaction totals.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getMonthlyTransition(Request $request): JsonResponse
     {
         try {
-            // Query to group transitions by month and calculate the total amount for each month
-            $monthlyTotals = Transition::select(
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('SUM(amount) as total_amount')
-            )
-                ->groupBy('year', 'month')
-                ->orderBy('year', 'desc')
-                ->orderBy('month', 'desc')
-                ->get();
+            $monthlyTotals = $this->reportService->getMonthlyTransactionTotals();
 
-            // Format the response
-            $formattedResults = $monthlyTotals->map(function ($item) {
-                return [
-                    'year' => $item->year,
-                    'month' => $item->month,
-                    'total_amount' => $item->total_amount,
-                ];
-            });
-
-            // Return the response as JSON
-            return response()->json([
-                'success' => true,
-                'status' => 200,
-                'message' => 'Monthly total transitions retrieved successfully.',
-                'data' => $formattedResults,
-            ]);
+            return $this->successResponse(
+                'Monthly total transitions retrieved successfully.',
+                $monthlyTotals
+            );
         } catch (\Exception $e) {
-            // Log the error for debugging purposes
-            Log::error('Error in getMonthlyTotal: ' . $e->getMessage());
+            Log::error('Error in getMonthlyTransition: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
 
-            // Return a generic error response
-            return response()->json([
-                'success' => false,
-                'status' => 500,
-                'message' => 'An error occurred while retrieving monthly total transitions.',
-                'data' => null,
-                'errors' => $e->getMessage(),
-            ], 500);
+            return $this->errorResponse(
+                'An error occurred while retrieving monthly total transitions.',
+                $e->getMessage()
+            );
         }
+    }
+
+    /**
+     * Return a success response.
+     *
+     * @param string $message
+     * @param mixed $data
+     * @param int $code
+     * @return JsonResponse
+     */
+    private function successResponse(string $message, $data = null, int $code = 200): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'status' => $code,
+            'message' => $message,
+            'data' => $data,
+        ], $code);
+    }
+
+    /**
+     * Return an error response.
+     *
+     * @param string $message
+     * @param string|null $error
+     * @param int $code
+     * @return JsonResponse
+     */
+    private function errorResponse(string $message, ?string $error = null, int $code = 500): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'status' => $code,
+            'message' => $message,
+            'data' => null,
+            'errors' => $error,
+        ], $code);
     }
 }
