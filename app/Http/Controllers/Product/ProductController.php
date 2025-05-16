@@ -189,7 +189,7 @@ class ProductController extends Controller
                 $formattedProduct['bundle_items'] = $product->bundleItems->map(function ($bundleItem) {
                     $item = $bundleItem->item; // Get the related item
                     return [
-                        'id' => $item->id,
+                        'product_id' => $item->id,
                         'name' => $item->name,
                         'price' => $item->price,
                         'discount' => $item->discount,
