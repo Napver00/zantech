@@ -173,7 +173,7 @@ class ProductController extends Controller
                     return [
                         'id' => $tag->id,
                         'tag' => $tag->tag,
-                        'slug'=> $tag->slug,
+                        'slug' => $tag->slug,
                     ];
                 }),
                 'images' => $product->images->map(function ($image) {
@@ -189,7 +189,8 @@ class ProductController extends Controller
                 $formattedProduct['bundle_items'] = $product->bundleItems->map(function ($bundleItem) {
                     $item = $bundleItem->item; // Get the related item
                     return [
-                        'product_id' => $item->id,
+                        'bundle_id'=> $bundleItem->id,
+                        'item_id' => $item->id,
                         'name' => $item->name,
                         'price' => $item->price,
                         'discount' => $item->discount,
@@ -232,9 +233,9 @@ class ProductController extends Controller
             $minPrice = $request->input('min_price');
             $maxPrice = $request->input('max_price');
 
-            // Base query to fetch products with one image and order by 'created_at' in descending order
+            // Base query to fetch products with all related images of type 'product'
             $query = Item::with(['images' => function ($query) {
-                $query->select('relatable_id', 'path')->take(1);
+                $query->where('type', 'product')->orderBy('id', 'asc');
             }])->orderBy('created_at', 'desc');
 
             // Exclude items with status 0
@@ -271,6 +272,11 @@ class ProductController extends Controller
 
                 // Format the response with pagination data
                 $formattedProducts = $products->map(function ($product) {
+                    // Collect all image paths for this product
+                    $imagePaths = $product->images->map(function ($image) {
+                        return asset('storage/' . str_replace('public/', '', $image->path));
+                    })->toArray();
+
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
@@ -280,9 +286,7 @@ class ProductController extends Controller
                         'quantity' => $product->quantity,
                         'price' => $product->price,
                         'discount' => $product->discount,
-                        'image_path' => $product->images->isNotEmpty()
-                            ? asset('storage/' . str_replace('public/', '', $product->images->first()->path))
-                            : null,
+                        'image_paths' => $imagePaths,
                     ];
                 });
 
@@ -307,6 +311,11 @@ class ProductController extends Controller
 
             // Format the response
             $formattedProducts = $products->map(function ($product) {
+                // Collect all image paths for this product
+                $imagePaths = $product->images->map(function ($image) {
+                    return asset('storage/' . str_replace('public/', '', $image->path));
+                })->toArray();
+
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -316,9 +325,7 @@ class ProductController extends Controller
                     'quantity' => $product->quantity,
                     'price' => $product->price,
                     'discount' => $product->discount,
-                    'image_path' => $product->images->isNotEmpty()
-                        ? asset('storage/' . str_replace('public/', '', $product->images->first()->path))
-                        : null,
+                    'image_paths' => $imagePaths,
                 ];
             });
 

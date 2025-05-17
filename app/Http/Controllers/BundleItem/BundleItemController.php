@@ -124,7 +124,7 @@ class BundleItemController extends Controller
         }
 
         // Update the quantity
-        $bundleItem->bundle_quantity += $request->quantity;
+        $bundleItem->bundle_quantity = $request->quantity;
         $bundleItem->save();
 
         return response()->json([
