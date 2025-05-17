@@ -84,6 +84,7 @@ class ChallanController extends Controller
                 // Update the item quantity in the items table
                 $item = Item::find($itemId);
                 $item->quantity += $request->quantity[$index];
+                $item->buying_price = $request->buying[$index];
                 $item->save();
             }
 

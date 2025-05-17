@@ -17,7 +17,8 @@ class Item extends Model
         'quantity',
         'price',
         'discount',
-        'is_bundle'
+        'is_bundle',
+        'buying_price'
     ];
 
     // Relationship with Cetagory_Product_list
