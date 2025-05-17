@@ -11,18 +11,21 @@ use App\Models\Challan;
 use App\Models\Supplier_item_list;
 use App\Models\User;
 use App\Models\Expense;
+use App\Models\Challan_item;
 
 class ChallanController extends Controller
 {
     public function store(Request $request)
     {
         try {
+            // Get the authenticated user
+            $user = auth()->user();
+
             // Validate the request data
             $validator = Validator::make($request->all(), [
                 'Date' => 'required|date',
                 'item_id' => 'required|array',
                 'item_id.*' => 'exists:items,id',
-                'user_id' => 'required|exists:users,id',
                 'delivery_price' => 'required|numeric|min:0',
                 'supplier_id' => 'required|exists:suppliers,id',
                 'buying' => 'required|array',
@@ -49,30 +52,33 @@ class ChallanController extends Controller
                 $totalBuyingPrice += $request->buying[$index] * $request->quantity[$index];
             }
 
-            // Calculate the total (buying price + delivery price)
+            // Calculate the total (buying + delivery)
             $total = $totalBuyingPrice + $request->delivery_price;
 
             // Create the challan
             $challan = Challan::create([
                 'Date' => $request->Date,
-                'user_id' => $request->user_id,
+                'user_id' => $user->id,
                 'total' => $total,
                 'delivery_price' => $request->delivery_price,
                 'supplier_id' => $request->supplier_id,
             ]);
 
-            // save in expense
+            // Save in expense
             Expense::create([
                 'date' => $request->Date,
-                'user_id' => $request->user_id,
+                'user_id' => $user->id,
                 'title' => 'Buying equipments',
                 'amount' => $total,
-                'description' => "Buying Equipment on {$request->date}. Total price is {$total}.",
+                'description' => "Buying Equipment on {$request->Date}. Total price is {$total}.",
             ]);
 
-            // Save supplier-item data and update item quantities
+            // Process each item
             foreach ($request->item_id as $index => $itemId) {
-                // Save in Supplier_item_list table
+                // Find item details
+                $item = Item::find($itemId);
+
+                // Save to Supplier_item_list
                 Supplier_item_list::create([
                     'supplier_id' => $request->supplier_id,
                     'item_id' => $itemId,
@@ -81,10 +87,17 @@ class ChallanController extends Controller
                     'challan_id' => $challan->id,
                 ]);
 
-                // Update the item quantity in the items table
-                $item = Item::find($itemId);
+                // Save to Challan_item with item_name
+                Challan_item::create([
+                    'challan_id' => $challan->id,
+                    'item_id' => $itemId,
+                    'item_name' => $item->name, // Store item name directly
+                    'quantity' => $request->quantity[$index],
+                    'buying_price' => $request->buying[$index],
+                ]);
+
+                // Update item quantity
                 $item->quantity += $request->quantity[$index];
-                $item->buying_price = $request->buying[$index];
                 $item->save();
             }
 
@@ -93,7 +106,6 @@ class ChallanController extends Controller
                 $invoice = $request->file('invoice');
                 $path = $invoice->store('public/challan');
 
-                // Save the image path in the File table
                 File::create([
                     'relatable_id' => $challan->id,
                     'type' => 'challan',
@@ -101,7 +113,6 @@ class ChallanController extends Controller
                 ]);
             }
 
-            // Return success response
             return response()->json([
                 'success' => true,
                 'status' => 201,
@@ -110,7 +121,6 @@ class ChallanController extends Controller
                 'errors' => null,
             ], 201);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -121,12 +131,15 @@ class ChallanController extends Controller
         }
     }
 
+
+
+
     // Show single challenge
     public function show($id)
     {
         try {
-            // Find the challan by ID with relationships
-            $challan = Challan::with(['supplier', 'user', 'supplierItems.item', 'invoice'])->find($id);
+            // Find the challan by ID with necessary relationships
+            $challan = Challan::with(['supplier', 'user', 'challanItems', 'invoice'])->find($id);
 
             // Check if the challan exists
             if (!$challan) {
@@ -153,11 +166,11 @@ class ChallanController extends Controller
                 'user' => [
                     'name' => $challan->user->name,
                 ],
-                'items' => $challan->supplierItems->map(function ($item) {
+                'items' => $challan->challanItems->map(function ($item) {
                     return [
-                        'item_id' => $item->item_id ?: null,
-                        'item_name' => $item->item->name,
-                        'price' => $item->price,
+                        'item_id' => $item->item_id,
+                        'item_name' => $item->item_name, // Directly from challan_items table
+                        'buying_price' => $item->buying_price,
                         'quantity' => $item->quantity,
                     ];
                 }),
@@ -176,7 +189,6 @@ class ChallanController extends Controller
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -186,6 +198,9 @@ class ChallanController extends Controller
             ], 500);
         }
     }
+
+
+
 
     // show all challenges
     public function index(Request $request)

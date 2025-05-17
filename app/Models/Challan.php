@@ -35,6 +35,12 @@ class Challan extends Model
         return $this->hasMany(Supplier_item_list::class, 'challan_id');
     }
 
+    public function challanItems()
+    {
+        return $this->hasMany(Challan_item::class);
+    }
+
+
     // Relationship with File (invoice)
     public function invoice()
     {

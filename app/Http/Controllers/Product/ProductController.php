@@ -159,6 +159,7 @@ class ProductController extends Controller
                 'name' => $product->name,
                 'description' => $product->description,
                 'short_description' => $product->short_description,
+                'is_bundle' => $product->is_bundle,
                 'status' => $product->status,
                 'quantity' => $product->quantity,
                 'price' => $product->price,
