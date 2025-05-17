@@ -42,8 +42,8 @@ class Challan extends Model
 
 
     // Relationship with File (invoice)
-    public function invoice()
+    public function invoices()
     {
-        return $this->hasOne(File::class, 'relatable_id')->where('type', 'challan');
+        return $this->hasMany(File::class, 'relatable_id')->where('type', 'challan');
     }
 }
