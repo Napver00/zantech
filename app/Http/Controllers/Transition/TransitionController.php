@@ -12,22 +12,43 @@ class TransitionController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get 'limit' and 'page' from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
 
-            // Start with a base query
+            $startDate = $request->input('start_date'); // format: Y-m-d
+            $endDate = $request->input('end_date');     // format: Y-m-d
+            $duration = $request->input('duration');    // e.g., 'today', 'this_week', 'this_month'
+
             $query = Transition::with('payment')->orderBy('created_at', 'desc');
 
-            // Apply pagination only if 'limit' and 'page' are provided
+            // Apply duration filters
+            if ($duration) {
+                switch ($duration) {
+                    case 'today':
+                        $query->whereDate('created_at', now()->toDateString());
+                        break;
+                    case 'this_week':
+                        $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                        break;
+                    case 'this_month':
+                        $query->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+                        break;
+                }
+            }
+
+            // Apply custom date range filter if provided
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            }
+
+            // Pagination or fetch all
             if ($perPage && $currentPage) {
                 $transitions = $query->paginate($perPage, ['*'], 'page', $currentPage);
             } else {
-                // Fetch all transitions if pagination parameters are not provided
                 $transitions = $query->get();
             }
 
-            // Format the response data
+            // Format transitions
             $formattedTransitions = $transitions->map(function ($transition) {
                 return [
                     'transition_id' => $transition->id,
@@ -48,7 +69,6 @@ class TransitionController extends Controller
                 ];
             });
 
-            // Prepare the response
             $response = [
                 'success' => true,
                 'status' => 200,
@@ -57,7 +77,7 @@ class TransitionController extends Controller
                 'errors' => null,
             ];
 
-            // Add pagination metadata if pagination is applied
+            // Add pagination metadata
             if ($perPage && $currentPage) {
                 $response['pagination'] = [
                     'total' => $transitions->total(),
@@ -69,10 +89,8 @@ class TransitionController extends Controller
                 ];
             }
 
-            // Return the response as JSON
             return response()->json($response, 200);
         } catch (\Exception $e) {
-            // Handle exceptions and return error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
