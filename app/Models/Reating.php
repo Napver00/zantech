@@ -21,4 +21,9 @@ class Reating extends Model
     {
         return $this->belongsTo(Item::class, 'product_id');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'User_id');
+    }
 }

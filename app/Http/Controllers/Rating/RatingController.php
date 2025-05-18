@@ -17,7 +17,6 @@ class RatingController extends Controller
             $validator = Validator::make($request->all(), [
                 'star' => 'required|integer|between:1,5',
                 'rating' => 'nullable|string|max:255',
-                'user_id' => 'required|exists:users,id',
                 'product_id' => 'required|exists:items,id',
             ]);
 
@@ -34,7 +33,7 @@ class RatingController extends Controller
 
             // Create the rating
             $rating = Reating::create([
-                'User_id' => $request->user_id,
+                'User_id' => $request->user()->id,
                 'status' => 0,
                 'star' => $request->star,
                 'rating' => $request->reating,
@@ -65,18 +64,32 @@ class RatingController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get 'limit' and 'page' from request
+            // Get 'limit', 'page', 'status', and 'star' from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
+            $status = $request->input('status');
+            $star = $request->input('star');
 
+            // Build the base query with eager loading
+            $query = Reating::with([
+                'product.images' => function ($q) {
+                    $q->take(1);
+                },
+                'user'
+            ])->orderBy('id', 'desc');
 
-            $query = Reating::with(['product.images' => function ($query) {
-                $query->take(1);
-            }])->orderBy('id', 'desc');
+            // Apply status filter if present
+            if (!is_null($status)) {
+                $query->where('status', $status);
+            }
 
-            // If pagination parameters are provided, apply pagination
+            // Apply star filter if present
+            if (!is_null($star)) {
+                $query->where('star', $star);
+            }
+
+            // Handle pagination
             if ($perPage && $currentPage) {
-                // Validate pagination parameters
                 if (!is_numeric($perPage) || !is_numeric($currentPage) || $perPage <= 0 || $currentPage <= 0) {
                     return response()->json([
                         'success' => false,
@@ -87,46 +100,12 @@ class RatingController extends Controller
                     ], 400);
                 }
 
-                // Apply pagination
                 $ratings = $query->paginate($perPage, ['*'], 'page', $currentPage);
-
-                // Format the paginated response
-                $formattedRatings = $ratings->map(function ($rating) {
-                    return [
-                        'id' => $rating->id,
-                        'star' => $rating->star,
-                        'reating' => $rating->reating,
-                        'status' => $rating->status,
-                        'product' => [
-                            'id' => $rating->product->id,
-                            'name' => $rating->product->name,
-                            'image' => $rating->product->images->isNotEmpty()
-                                ? asset('storage/' . str_replace('public/', '', $rating->product->images->first()->path))
-                                : null,
-                        ],
-                    ];
-                });
-
-                // Return response with pagination data
-                return response()->json([
-                    'success' => true,
-                    'status' => 200,
-                    'message' => 'Ratings retrieved successfully.',
-                    'data' => $formattedRatings,
-                    'pagination' => [
-                        'total_rows' => $ratings->total(),
-                        'current_page' => $ratings->currentPage(),
-                        'per_page' => $ratings->perPage(),
-                        'total_pages' => $ratings->lastPage(),
-                        'has_more_pages' => $ratings->hasMorePages(),
-                    ]
-                ], 200);
+            } else {
+                $ratings = $query->get();
             }
 
-            // If no pagination parameters, fetch all records without pagination
-            $ratings = $query->get();
-
-            // Format the response
+            // Format the response data
             $formattedRatings = $ratings->map(function ($rating) {
                 return [
                     'id' => $rating->id,
@@ -140,18 +119,29 @@ class RatingController extends Controller
                             ? asset('storage/' . str_replace('public/', '', $rating->product->images->first()->path))
                             : null,
                     ],
+                    'user' => $rating->user ? [
+                        'name' => $rating->user->name,
+                        'email' => $rating->user->email,
+                        'phone' => $rating->user->phone,
+                    ] : null,
                 ];
             });
 
-            // Return response without pagination links
+            // Return the JSON response
             return response()->json([
                 'success' => true,
                 'status' => 200,
                 'message' => 'Ratings retrieved successfully.',
-                'data' => $formattedRatings
+                'data' => $formattedRatings,
+                'pagination' => isset($ratings) && method_exists($ratings, 'total') ? [
+                    'total_rows' => $ratings->total(),
+                    'current_page' => $ratings->currentPage(),
+                    'per_page' => $ratings->perPage(),
+                    'total_pages' => $ratings->lastPage(),
+                    'has_more_pages' => $ratings->hasMorePages(),
+                ] : null,
             ], 200);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -161,6 +151,7 @@ class RatingController extends Controller
             ], 500);
         }
     }
+
 
     // Toggles the rating
     public function toggleStatus($id)
