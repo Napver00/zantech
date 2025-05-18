@@ -151,7 +151,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Shipping Address Routes
     Route::prefix('shipping-addresses')->group(function () {
         Route::post('/', [ShippingController::class, 'store']);
-        Route::get('/', [ShippingController::class, 'index']);
+        Route::get('/{user_id}', [ShippingController::class, 'index']);
         Route::get('/{shipping_id}', [ShippingController::class, 'show']);
         Route::put('/{shipping_id}', [ShippingController::class, 'update']);
         Route::delete('/{shipping_id}', [ShippingController::class, 'destroy']);
@@ -183,9 +183,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // payment routes
-    Route::prefix('paymens')->group(function () {
+    Route::prefix('payments')->group(function () {
         Route::put('/update-status/{paymentId}', [PaymentController::class, 'updatePaymentStatus']);
-        Route::put('/update-padi-amount/{paymentId}', [PaymentController::class, 'updatePadiAmount']);
+        Route::put('/update-paid-amount/{paymentId}', [PaymentController::class, 'updatePadiAmount']);
     });
 
     // Transaction routes

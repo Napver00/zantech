@@ -22,7 +22,7 @@ class ShippingController extends Controller
                 'address' => 'required|string|max:255',
                 'city' => 'required|string|max:255',
                 'zip' => 'required|string|max:10',
-                'User_id'=> 'required|integer'
+                'User_id' => 'required|integer'
             ]);
 
             // If validation fails, return error response
@@ -209,15 +209,12 @@ class ShippingController extends Controller
     }
 
     // Method to fetch all shipping addresses created by the logged-in user
-    public function index()
+    public function index($user_id)
     {
         try {
-            // Get the authenticated user's ID
-            $userId = Auth::id();
-
-            // Fetch all shipping addresses created by the user in descending order
-            $shippingAddresses = ShippingAddress::where('User_id', $userId)
-                ->orderBy('created_at', 'desc') // Sorting by latest created_at
+            // Fetch all shipping addresses created by the provided user_id in descending order
+            $shippingAddresses = ShippingAddress::where('User_id', $user_id)
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             // Return the response in JSON format

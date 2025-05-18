@@ -306,6 +306,8 @@ class OrderController extends Controller
                 $orders = $query->get();
             }
 
+
+
             // Format the response data
             $formattedOrders = $orders->map(function ($order) {
                 return [
@@ -506,12 +508,12 @@ class OrderController extends Controller
                 'discount' => $order->discount,
                 'created_at' => $order->created_at->format('Y-m-d H:i:s'),
             ],
-            'user' => [
+            'user' => $order->user ? [
                 'name' => $order->user->name,
                 'email' => $order->user->email,
                 'phone' => $order->user->phone,
                 'address' => $order->user->address,
-            ] ?? null,
+            ] : null,
             'shipping_address' => $order->shippingAddress ? [
                 'f_name' => $order->shippingAddress->f_name,
                 'l_name' => $order->shippingAddress->l_name,
@@ -859,7 +861,6 @@ class OrderController extends Controller
                     'product_id' => $request->input('product_id'),
                     'quantity' => $request->input('quantity'),
                     'price' => $price,
-                    'is_bundle' => $product->is_bundle,
                 ]);
                 $oldTotal = 0;
                 $newTotal = $orderItem->quantity * $orderItem->price;
