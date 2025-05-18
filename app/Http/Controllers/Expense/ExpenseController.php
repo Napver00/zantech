@@ -19,14 +19,13 @@ class ExpenseController extends Controller
             // Validate the request data
             $validator = Validator::make($request->all(), [
                 'date' => 'required|date',
-                'user_id' => 'required|integer|exists:users,id',
                 'title' => 'required|string|max:255',
                 'amount' => 'required|numeric|min:0',
-                'prove' => 'required|file|mimes:jpg,jpeg,png,pdf|max:3048',
+                'prove.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:3048',
+                'prove' => 'nullable|array',
                 'description' => 'nullable|string',
             ]);
 
-            // If validation fails, return error response
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
@@ -36,40 +35,48 @@ class ExpenseController extends Controller
                 ], 400);
             }
 
-            // Handle file upload
-            if ($request->hasFile('prove')) {
-                $file = $request->file('prove');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $filePath = $file->storeAs('public/expense', $fileName);
-            }
-
             // Create the expense record
             $expense = Expense::create([
                 'date' => $request->date,
-                'user_id' => $request->user_id,
+                'user_id' => $request->user()->id,
                 'title' => $request->title,
                 'amount' => $request->amount,
                 'description' => $request->description,
             ]);
 
-            $fileRecord = File::create([
-                'relatable_id' => $expense->id,
-                'type' => 'expense',
-                'path' => $filePath,
-            ]);
+            $filePaths = [];
 
-            // Add file URL to the response
-            $expense->prove_url = asset('storage/expense/' . $fileName);
+            // Handle multiple file uploads
+            if ($request->hasFile('prove')) {
+                foreach ($request->file('prove') as $file) {
+                    $fileName = time() . '_' . $file->getClientOriginalName();
+                    $filePath = $file->storeAs('public/expense', $fileName);
 
-            // Return success response
+                    File::create([
+                        'relatable_id' => $expense->id,
+                        'type' => 'expense',
+                        'path' => $filePath,
+                    ]);
+
+                    $filePaths[] = asset('storage/expense/' . $fileName);
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'status' => 201,
                 'message' => 'Expense created successfully.',
-                'data' =>  $expense,
+                'data' => [
+                    'id' => $expense->id,
+                    'date' => $expense->date,
+                    'user_id' => $expense->user_id,
+                    'title' => $expense->title,
+                    'amount' => $expense->amount,
+                    'description' => $expense->description,
+                    'proves' => $filePaths,
+                ],
             ], 201);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -79,22 +86,31 @@ class ExpenseController extends Controller
         }
     }
 
+
+
     // shwo all expense
     public function index(Request $request)
     {
         try {
-            // Get 'limit' and 'page' from the request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
+            $exactDate = $request->input('date');
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
 
-            // Base query to fetch expenses with their associated prove files
-            $query = Expense::with(['proveFile' => function ($query) {
-                $query->where('type', 'expense');
-            }])->orderBy('created_at', 'desc');
+            $query = Expense::with('proveFiles')->orderBy('created_at', 'desc');
 
-            // If pagination parameters are provided, apply pagination
+            // Filter by exact date
+            if ($exactDate) {
+                $query->whereDate('date', $exactDate);
+            }
+
+            // Filter by date range
+            if ($startDate && $endDate) {
+                $query->whereBetween('date', [$startDate, $endDate]);
+            }
+
             if ($perPage && $currentPage) {
-                // Validate pagination parameters
                 if (!is_numeric($perPage) || !is_numeric($currentPage) || $perPage <= 0 || $currentPage <= 0) {
                     return response()->json([
                         'success' => false,
@@ -105,10 +121,8 @@ class ExpenseController extends Controller
                     ], 400);
                 }
 
-                // Apply pagination
                 $expenses = $query->paginate($perPage, ['*'], 'page', $currentPage);
 
-                // Format the response with pagination data
                 $formattedExpenses = $expenses->map(function ($expense) {
                     return [
                         'id' => $expense->id,
@@ -117,15 +131,16 @@ class ExpenseController extends Controller
                         'title' => $expense->title,
                         'amount' => $expense->amount,
                         'description' => $expense->description,
-                        'prove' => $expense->proveFile ? [
-                            'id' => $expense->proveFile->id,
-                            'type' => $expense->proveFile->type,
-                            'url' => asset('storage/expense/' . $expense->proveFile->path),
-                        ] : null,
+                        'proves' => $expense->proveFiles->map(function ($proveFile) {
+                            return [
+                                'id' => $proveFile->id,
+                                'type' => $proveFile->type,
+                                'url' => asset('storage/expense/' . basename($proveFile->path)),
+                            ];
+                        }),
                     ];
                 });
 
-                // Return response with pagination data
                 return response()->json([
                     'success' => true,
                     'status' => 200,
@@ -142,10 +157,9 @@ class ExpenseController extends Controller
                 ], 200);
             }
 
-            // If no pagination parameters, fetch all records without pagination
+            // If no pagination
             $expenses = $query->get();
 
-            // Format the response
             $formattedExpenses = $expenses->map(function ($expense) {
                 return [
                     'id' => $expense->id,
@@ -154,15 +168,16 @@ class ExpenseController extends Controller
                     'title' => $expense->title,
                     'amount' => $expense->amount,
                     'description' => $expense->description,
-                    'prove' => $expense->proveFile ? [
-                        'id' => $expense->proveFile->id,
-                        'type' => $expense->proveFile->type,
-                        'url' => asset('storage/expense/' . $expense->proveFile->path),
-                    ] : null,
+                    'proves' => $expense->proveFiles->map(function ($proveFile) {
+                        return [
+                            'id' => $proveFile->id,
+                            'type' => $proveFile->type,
+                            'url' => asset('storage/expense/' . basename($proveFile->path)),
+                        ];
+                    }),
                 ];
             });
 
-            // Return response without pagination links
             return response()->json([
                 'success' => true,
                 'status' => 200,
@@ -170,7 +185,6 @@ class ExpenseController extends Controller
                 'data' => $formattedExpenses,
             ], 200);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -179,6 +193,8 @@ class ExpenseController extends Controller
             ], 500);
         }
     }
+
+
 
     // update the expense
     public function update(Request $request, $id)
@@ -189,7 +205,7 @@ class ExpenseController extends Controller
                 'title' => 'sometimes|string|max:255',
                 'description' => 'sometimes|string',
                 'amount' => 'sometimes|numeric|min:0',
-                'user_id' => 'required|integer|exists:users,id',
+                'proves.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
             ]);
 
             // If validation fails, return error response
@@ -205,7 +221,6 @@ class ExpenseController extends Controller
             // Find the expense by ID
             $expense = Expense::find($id);
 
-            // If expense not found, return error response
             if (!$expense) {
                 return response()->json([
                     'success' => false,
@@ -216,16 +231,14 @@ class ExpenseController extends Controller
                 ], 404);
             }
 
-            // Store the old values for comparison
+            // Store old values for comparison
             $oldValues = $expense->getAttributes();
 
-            // Update the expense with new values
+            // Update fields
             $expense->update($request->only(['title', 'description', 'amount', 'user_id']));
 
-            // Store the new values for comparison
+            // Compare for change log
             $newValues = $expense->getAttributes();
-
-            // Generate a description of changes
             $changes = [];
             foreach ($request->all() as $key => $value) {
                 if (array_key_exists($key, $oldValues) && $oldValues[$key] != $newValues[$key]) {
@@ -233,29 +246,182 @@ class ExpenseController extends Controller
                 }
             }
 
-            // Log the changes in the Activity table
+            // Upload and save multiple prove files if provided
+            if ($request->hasFile('proves')) {
+                foreach ($request->file('proves') as $file) {
+                    $path = $file->store('expense', 'public');
+
+                    File::create([
+                        'relatable_id' => $expense->id,
+                        'type' => 'expense',
+                        'path' => $path,
+                    ]);
+                }
+
+                $changes[] = "New prove files uploaded";
+            }
+
+            // Log changes
             if (!empty($changes)) {
                 Activity::create([
                     'relatable_id' => $expense->id,
                     'type' => 'expense',
-                    'user_id' => $request->user_id ?? $expense->user_id,
+                    'user_id' => $request->user()->id,
                     'description' => 'Expense updated: ' . implode(', ', $changes),
                 ]);
             }
 
-            // Return success response
             return response()->json([
                 'success' => true,
                 'status' => 200,
                 'message' => 'Expense updated successfully.',
-                'data' => $expense,
+                'data' => $expense->load('proveFiles'),
             ], 200);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'An error occurred while updating the expense.',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // single expense
+    public function show($id)
+    {
+        try {
+            $expense = Expense::with('proveFiles')->find($id);
+
+            if (!$expense) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Expense not found.',
+                    'data' => null,
+                    'errors' => 'Expense not found.',
+                ], 404);
+            }
+
+            $formattedExpense = [
+                'id' => $expense->id,
+                'date' => $expense->date,
+                'user_id' => $expense->user_id,
+                'title' => $expense->title,
+                'amount' => $expense->amount,
+                'description' => $expense->description,
+                'proves' => $expense->proveFiles->map(function ($proveFile) {
+                    return [
+                        'id' => $proveFile->id,
+                        'type' => $proveFile->type,
+                        'url' => asset('storage/expense/' . basename($proveFile->path)),
+                    ];
+                }),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Expense retrieved successfully.',
+                'data' => $formattedExpense,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while retrieving the expense.',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // delete the expense proves
+    public function destroyProve($id)
+    {
+        try {
+            // Find the file record
+            $file = File::find($id);
+
+            if (!$file) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Invoice file not found.',
+                    'data' => null,
+                    'errors' => 'Invalid file ID.',
+                ], 404);
+            }
+
+            // Check and delete file from storage
+            if (Storage::exists($file->path)) {
+                Storage::delete($file->path);
+            }
+
+            // Delete the database record
+            $file->delete();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Invoice file deleted successfully.',
+                'data' => null,
+                'errors' => null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while deleting the invoice file.',
+                'data' => null,
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // delete the expense
+    public function destroy($id)
+    {
+        try {
+            // Find the expense
+            $expense = Expense::find($id);
+
+            if (!$expense) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Expense not found.',
+                    'data' => null,
+                ], 404);
+            }
+
+            // Get related files
+            $files = File::where('relatable_id', $expense->id)->where('type', 'expense')->get();
+
+            // Delete each file from storage and database
+            foreach ($files as $file) {
+                // Delete from storage
+                if (Storage::exists($file->path)) {
+                    Storage::delete($file->path);
+                }
+
+                // Delete file record
+                $file->delete();
+            }
+
+            // Delete the expense
+            $expense->delete();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Expense and associated files deleted successfully.',
+                'data' => null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while deleting the expense.',
                 'errors' => $e->getMessage(),
             ], 500);
         }

@@ -207,15 +207,18 @@ class ChallanController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get 'limit', 'page', and 'search' from request
+            // Get inputs
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
             $search = $request->input('search');
+            $date = $request->input('date');
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
 
-            // Base query to fetch challans with supplier information, ordered by descending order
+            // Base query
             $query = Challan::with('supplier')->orderBy('id', 'desc');
 
-            // Apply search filter if 'search' parameter is provided
+            // Search filter
             if ($search) {
                 $query->whereHas('supplier', function ($q) use ($search) {
                     $q->where('name', 'like', '%' . $search . '%')
@@ -223,9 +226,18 @@ class ChallanController extends Controller
                 });
             }
 
-            // If pagination parameters are provided, apply pagination
+            // Exact date filter (expects YYYY-MM-DD)
+            if ($date) {
+                $query->whereDate('Date', $date);
+            }
+
+            // Date range filter (expects YYYY-MM-DD format)
+            if ($startDate && $endDate) {
+                $query->whereBetween('Date', [$startDate, $endDate]);
+            }
+
+            // Pagination
             if ($perPage && $currentPage) {
-                // Validate pagination parameters
                 if (!is_numeric($perPage) || !is_numeric($currentPage) || $perPage <= 0 || $currentPage <= 0) {
                     return response()->json([
                         'success' => false,
@@ -235,10 +247,8 @@ class ChallanController extends Controller
                     ], 400);
                 }
 
-                // Apply pagination
                 $challans = $query->paginate($perPage, ['*'], 'page', $currentPage);
 
-                // Format the paginated response
                 $formattedChallans = $challans->map(function ($challan) {
                     return [
                         'id' => $challan->id,
@@ -253,7 +263,6 @@ class ChallanController extends Controller
                     ];
                 });
 
-                // Return response with pagination data
                 return response()->json([
                     'success' => true,
                     'status' => 200,
@@ -269,25 +278,23 @@ class ChallanController extends Controller
                 ], 200);
             }
 
-            // If no pagination parameters, fetch all records without pagination
+            // Without pagination
             $challans = $query->get();
 
-            // Format the response
             $formattedChallans = $challans->map(function ($challan) {
                 return [
                     'id' => $challan->id,
                     'Date' => $challan->Date,
                     'total' => $challan->total,
                     'delivery_price' => $challan->delivery_price,
-                    'supplier' => [
+                    'supplier' => $challan->supplier ? [
                         'name' => $challan->supplier->name,
                         'phone' => $challan->supplier->phone,
                         'address' => $challan->supplier->address,
-                    ],
+                    ] : null,
                 ];
             });
 
-            // Return response without pagination links
             return response()->json([
                 'success' => true,
                 'status' => 200,
@@ -295,7 +302,6 @@ class ChallanController extends Controller
                 'data' => $formattedChallans
             ], 200);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -305,6 +311,7 @@ class ChallanController extends Controller
             ], 500);
         }
     }
+
 
     // update challenge
     public function update(Request $request, $id)

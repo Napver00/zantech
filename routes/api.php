@@ -124,6 +124,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [ExpenseController::class, 'store']);
         Route::get('/', [ExpenseController::class, 'index']);
         Route::put('/{expense_id}', [ExpenseController::class, 'update']);
+        Route::get('/{expense_id}', [ExpenseController::class, 'show']);
+        Route::delete('/prove/{file_id}', [ExpenseController::class, 'destroyProve']);
+        Route::delete('/{expense_id}', [ExpenseController::class, 'destroy']);
+
     });
 
     // Hero Section Routes

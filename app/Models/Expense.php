@@ -18,10 +18,11 @@ class Expense extends Model
     ];
 
     // Relationship with File model
-    public function proveFile()
+    public function proveFiles()
     {
-        return $this->hasOne(File::class, 'relatable_id')->where('type', 'expense');
+        return $this->hasMany(File::class, 'relatable_id')->where('type', 'expense');
     }
+
 
     // Relationship with Activity model
     public function activities()
