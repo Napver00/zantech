@@ -278,15 +278,17 @@ class OrderController extends Controller
     public function adminindex(Request $request)
     {
         try {
-            // Get 'limit', 'page', and 'search' from request
+            // Get request parameters
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
             $search = $request->input('search');
+            $startDate = $request->input('start_date'); // Format: YYYY-MM-DD
+            $endDate = $request->input('end_date');     // Format: YYYY-MM-DD
 
-            // Fetch orders in descending order (latest first)
+            // Build the query
             $query = Order::with('user')->orderBy('created_at', 'desc');
 
-            // Apply search filter if 'search' parameter is provided
+            // Filter by search keyword
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('invoice_code', 'like', '%' . $search . '%')
@@ -298,17 +300,22 @@ class OrderController extends Controller
                 });
             }
 
-            // Apply pagination only if 'limit' and 'page' are provided
+            // Filter by date range (created_at)
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay()
+                ]);
+            }
+
+            // Apply pagination
             if ($perPage && $currentPage) {
                 $orders = $query->paginate($perPage, ['*'], 'page', $currentPage);
             } else {
-                // Fetch all orders if pagination parameters are not provided
                 $orders = $query->get();
             }
 
-
-
-            // Format the response data
+            // Format order data
             $formattedOrders = $orders->map(function ($order) {
                 return [
                     'user_name' => $order->user?->name ?? $order->user_name,
@@ -322,16 +329,29 @@ class OrderController extends Controller
                 ];
             });
 
+            // Fetch status summary
+            $statusCounts = Order::select('status', DB::raw('count(*) as total'))
+                ->groupBy('status')
+                ->get()
+                ->pluck('total', 'status');
+
             // Prepare the response
             $response = [
                 'success' => true,
                 'status' => 200,
                 'message' => 'Orders fetched successfully.',
                 'data' => $formattedOrders,
+                'status_summary' => [
+                    'processing' => $statusCounts[0] ?? 0,
+                    'completed' => $statusCounts[1] ?? 0,
+                    'on_hold' => $statusCounts[2] ?? 0,
+                    'cancelled' => $statusCounts[3] ?? 0,
+                    'refunded' => $statusCounts[4] ?? 0,
+                ],
                 'errors' => null,
             ];
 
-            // Add pagination metadata if pagination is applied
+            // Include pagination metadata if used
             if ($perPage && $currentPage) {
                 $response['pagination'] = [
                     'total' => $orders->total(),
@@ -343,20 +363,17 @@ class OrderController extends Controller
                 ];
             }
 
-            // Return the response as JSON
             return response()->json($response, 200);
         } catch (\Exception $e) {
-            // Extract only the main error message
             $errorMessage = $e->getMessage();
 
-            // Check if it's a SQL Integrity Constraint Violation
             if (str_contains($errorMessage, 'Integrity constraint violation')) {
                 preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
                 if (!empty($matches)) {
                     $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
                 }
             }
-            // Handle exceptions and return error response
+
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -366,6 +383,9 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+
+
 
     // shwo all orders for user
     public function userindex(Request $request)
