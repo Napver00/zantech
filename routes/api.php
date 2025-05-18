@@ -196,7 +196,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // client routes
     Route::prefix('clints')->group(function () {
         Route::get('/', [UserController::class, 'index']);
-        Route::get('/all-info', [UserController::class, 'shwoAllInfo']);
+        Route::get('/all-info/{user_id}', [UserController::class, 'shwoAllInfo']);
     });
 
     // whshltist routes

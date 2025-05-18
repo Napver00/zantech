@@ -16,9 +16,20 @@ use App\Models\Coupon;
 class UserController extends Controller
 {
     //shwo user info only id, name and email
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::select('id', 'name', 'email')->get();
+        $query = User::select('id', 'name', 'email', 'phone', 'address');
+
+        // Search by name, email, or phone
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->get();
 
         if ($users->isEmpty()) {
             return response()->json([
@@ -30,32 +41,65 @@ class UserController extends Controller
             ], 404);
         }
 
+        // Prepare enriched user data
+        $allUsersData = [];
+
+        foreach ($users as $user) {
+            $orders = Order::where('user_id', $user->id)->get();
+            $totalOrders = $orders->count();
+            $totalAmount = $orders->where('status', 1)->sum('total_amount');
+
+            $payments = Payment::whereHas('order', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->get();
+
+            $totalDueAmount = $payments->sum(function ($payment) {
+                return $payment->amount - $payment->padi_amount;
+            });
+
+            $allUsersData[] = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'order_summary' => [
+                    'total_orders' => $totalOrders,
+                    'total_spend' => $totalAmount,
+                ],
+                'payment_summary' => [
+                    'due_amount' => $totalDueAmount,
+                ],
+            ];
+        }
+
         return response()->json([
             'success' => true,
             'status' => 200,
             'message' => 'Users retrieved successfully.',
-            'data' => $users,
+            'data' => $allUsersData,
             'errors' => null,
         ], 200);
     }
 
-    // shwo user all information
-    public function shwoAllInfo(Request $request)
-    {
 
-        // Get 'limit' and 'page' from request, default to null
+
+    // shwo user all information
+    public function shwoAllInfo(Request $request, $userId)
+    {
         $perPage = $request->input('limit');
         $currentPage = $request->input('page');
 
-        // Fetch all users
-        $users = User::select('id', 'name', 'email', 'phone', 'created_at', 'address');
+        $query = User::select('id', 'name', 'email', 'phone', 'created_at', 'address');
 
-        // Apply pagination if limit and page are provided
+        if ($userId) {
+            $query->where('id', $userId);
+        }
+
         if ($perPage && $currentPage) {
-            $users = $users->paginate($perPage);
+            $users = $query->paginate($perPage);
         } else {
-            // If no pagination is requested, fetch all data
-            $users = $users->get();
+            $users = $query->get();
         }
 
         if ($users->isEmpty()) {
@@ -68,20 +112,14 @@ class UserController extends Controller
             ], 404);
         }
 
-        // Initialize an array to store data for all users
         $allUsersData = [];
 
-        // Loop through each user
         foreach ($users as $user) {
-            // Fetch shipping addresses related to the user
             $shippingAddresses = ShippingAddress::where('User_id', $user->id)->get();
-
-            // Fetch order details
             $orders = Order::where('user_id', $user->id)->get();
             $totalOrders = $orders->count();
             $totalAmount = $orders->where('status', 1)->sum('total_amount');
 
-            // Fetch payment details
             $payments = Payment::whereHas('order', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })->get();
@@ -90,7 +128,6 @@ class UserController extends Controller
                 return $payment->amount - $payment->padi_amount;
             });
 
-            // Prepare the data for the current user
             $userData = [
                 'user' => $user,
                 'shipping_addresses' => $shippingAddresses,
@@ -103,10 +140,9 @@ class UserController extends Controller
                 ],
             ];
 
-            // Add the current user's data to the array
             $allUsersData[] = $userData;
         }
-        // Prepare pagination data
+
         $pagination = $perPage ? [
             'total_rows' => $users->total(),
             'current_page' => $users->currentPage(),
@@ -118,12 +154,13 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'status' => 200,
-            'message' => 'User information retrieved successfully for all users.',
+            'message' => 'User information retrieved successfully.',
             'data' => $allUsersData,
             'pagination' => $pagination,
             'error' => null,
         ], 200);
     }
+
 
     // Shwo all active
     public function getActivities(Request $request)
