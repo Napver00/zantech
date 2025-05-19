@@ -82,8 +82,8 @@ class OrderController extends Controller
             'products.*.quantity' => 'required|integer|min:1',
             'payment_type' => 'required|integer|in:1,2', // 1 = Cash on Delivery, 2 = Bkash
             'trxed' => 'nullable|string|max:255',
-            'user_name' => 'required_if:user_id,null|string|max:255',
-            'address' => 'required_if:shipping_id,null|string|max:255',
+            'user_name' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
             'userphone' => 'nullable|string|max:20',
         ]);
     }
