@@ -278,17 +278,15 @@ class OrderController extends Controller
     public function adminindex(Request $request)
     {
         try {
-            // Get request parameters
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
             $search = $request->input('search');
-            $startDate = $request->input('start_date'); // Format: YYYY-MM-DD
-            $endDate = $request->input('end_date');     // Format: YYYY-MM-DD
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
 
-            // Build the query
-            $query = Order::with('user')->orderBy('created_at', 'desc');
+            // Eager load 'user' and 'payment' relationships
+            $query = Order::with(['user', 'payment'])->orderBy('created_at', 'desc');
 
-            // Filter by search keyword
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('invoice_code', 'like', '%' . $search . '%')
@@ -300,7 +298,6 @@ class OrderController extends Controller
                 });
             }
 
-            // Filter by date range (created_at)
             if ($startDate && $endDate) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -308,15 +305,17 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Apply pagination
-            if ($perPage && $currentPage) {
-                $orders = $query->paginate($perPage, ['*'], 'page', $currentPage);
-            } else {
-                $orders = $query->get();
-            }
+            $orders = ($perPage && $currentPage)
+                ? $query->paginate($perPage, ['*'], 'page', $currentPage)
+                : $query->get();
 
-            // Format order data
             $formattedOrders = $orders->map(function ($order) {
+                $payment = $order->payment; // Assume one-to-one relationship (adjust if multiple payments)
+
+                $paidAmount = $payment?->padi_amount ?? 0;
+                $totalAmount = $payment?->amount ?? $order->total_amount ?? 0;
+                $dueAmount = $totalAmount - $paidAmount;
+
                 return [
                     'user_name' => $order->user?->name ?? $order->user_name,
                     'user_phone' => $order->user?->phone ?? $order->phone,
@@ -324,18 +323,18 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'invoice_code' => $order->invoice_code,
                     'status' => $order->status,
-                    'total_amount' => $order->total_amount,
+                    'total_amount' => $totalAmount,
+                    'paid_amount' => $paidAmount,
+                    'due_amount' => $dueAmount,
                     'order_placed_date_time' => $order->created_at->format('Y-m-d H:i:s'),
                 ];
             });
 
-            // Fetch status summary
             $statusCounts = Order::select('status', DB::raw('count(*) as total'))
                 ->groupBy('status')
                 ->get()
                 ->pluck('total', 'status');
 
-            // Prepare the response
             $response = [
                 'success' => true,
                 'status' => 200,
@@ -351,7 +350,6 @@ class OrderController extends Controller
                 'errors' => null,
             ];
 
-            // Include pagination metadata if used
             if ($perPage && $currentPage) {
                 $response['pagination'] = [
                     'total' => $orders->total(),
@@ -383,6 +381,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
 
 
 
