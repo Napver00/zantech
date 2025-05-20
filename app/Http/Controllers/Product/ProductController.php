@@ -14,6 +14,7 @@ use App\Models\Cetagory_Product_list;
 use App\Models\Cetagory;
 use Illuminate\Support\Str;
 
+
 class ProductController extends Controller
 {
     // Store the product
@@ -51,6 +52,8 @@ class ProductController extends Controller
                 ], 422);
             }
 
+            $metaKeywords = $request->has('tags') ? implode(',', $request->tags) : null;
+            $metaDescription = $request->description ? Str::limit(strip_tags($request->description), 255) : null;
             // Create the product
             $product = Item::create([
                 'name' => $request->name,
@@ -61,6 +64,9 @@ class ProductController extends Controller
                 'price' => $request->price,
                 'discount' => $request->discount,
                 'is_bundle' => $request->is_bundle,
+                'meta_title' => $request->name,
+                'meta_keywords' => $metaKeywords,
+                'meta_description' => $metaDescription,
             ]);
 
             // Save bundle items with bundle_quantity
@@ -164,6 +170,9 @@ class ProductController extends Controller
                 'quantity' => $product->quantity,
                 'price' => $product->price,
                 'discount' => $product->discount,
+                'meta_title' => $product->meta_title,
+                'meta_keywords' => $product->meta_keywords,
+                'meta_description' => $product->meta_description,
                 'categories' => $product->categories->map(function ($category) {
                     return [
                         'id' => $category->category->id,
@@ -190,7 +199,7 @@ class ProductController extends Controller
                 $formattedProduct['bundle_items'] = $product->bundleItems->map(function ($bundleItem) {
                     $item = $bundleItem->item; // Get the related item
                     return [
-                        'bundle_id'=> $bundleItem->id,
+                        'bundle_id' => $bundleItem->id,
                         'item_id' => $item->id,
                         'name' => $item->name,
                         'price' => $item->price,
@@ -281,8 +290,6 @@ class ProductController extends Controller
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
-                        'description' => $product->description,
-                        'short_description' => $product->short_description,
                         'status' => $product->status,
                         'quantity' => $product->quantity,
                         'price' => $product->price,
@@ -434,6 +441,14 @@ class ProductController extends Controller
                 ], 404);
             }
 
+            $metaDescription = $request->description ? Str::limit(strip_tags($request->description), 255) : null;
+            if ($request->has('name')) {
+                $product->meta_title = $request->name;
+            }
+
+            if ($request->has('description')) {
+                $product->meta_description = $metaDescription;
+            }
             // Update the product with validated data
             $product->update($request->only([
                 'name',

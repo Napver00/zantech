@@ -56,6 +56,11 @@ class TagController extends Controller
                 ]);
             }
 
+            // Update the product's meta keywords
+            $metaKeywords = $request->has('tags') ? implode(',', $request->tags) : null;
+            $product->meta_keywords =  $metaKeywords;
+            $product->save();
+
             // Return success response
             return response()->json([
                 'success' => true,
