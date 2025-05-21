@@ -24,6 +24,7 @@ use App\Http\Controllers\Email\EmailController;
 use App\Http\Controllers\Passwort\ForgotPasswordController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
 use App\Http\Controllers\Report\ReportController;
+use App\Http\Controllers\Contact\ContactController;
 
 // Admin Auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -219,4 +220,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/expenses/monthly-total', [ReportController::class, 'getExpenseMonthly']);
         Route::get('/transitions/monthly-total', [ReportController::class, 'getMonthlyTransition']);
     });
+});
+
+
+// Public Api
+
+// Contact Us
+Route::prefix('contact')->group(function () {
+    Route::post('/', [ContactController::class, 'store']);
+    Route::get('/', [ContactController::class, 'index']);
+    Route::delete('/{contact_id}', [ContactController::class, 'destroy']);
 });
