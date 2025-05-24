@@ -14,13 +14,16 @@ return new class extends Migration
         Schema::create('items', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('description');
-            $table->string('short_description');
+            $table->text('description');
+            $table->text('short_description');
             $table->string('status')->default(1);
             $table->integer('quantity');
             $table->integer('price');
             $table->integer('discount')->nullable();
             $table->integer('is_bundle')->nullable();
+            $table->text('meta_title')->nullable();
+            $table->text('meta_description')->nullable();
+            $table->text('meta_keywords')->nullable();
             $table->timestamps();
         });
     }
