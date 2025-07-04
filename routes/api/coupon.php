@@ -1,0 +1,16 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Coupon\CouponController;
+
+Route::middleware('auth:sanctum')->group(function () {
+
+
+    // Coupon Routes
+    Route::prefix('coupons')->group(function () {
+        Route::post('/', [CouponController::class, 'store']);
+        Route::get('/', [CouponController::class, 'index']);
+        Route::put('/{coupon_id}', [CouponController::class, 'update']);
+        Route::delete('/{coupon_id}', [CouponController::class, 'destroy']);
+    });
+});
