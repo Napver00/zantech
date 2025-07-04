@@ -39,17 +39,21 @@ class PaymentController extends Controller
             $payment->status = $request->input('status');
             $payment->save();
 
-            // If status is 1 and 3, store data in the Transition table
-            if ($payment->status == 1) {
-                Transition::create([
-                    'payment_id' => $payment->id,
-                    'amount' => $payment->amount,
-                ]);
-            } else if ($payment->status == 3) {
-                Transition::create([
-                    'payment_id' => $payment->id,
-                    'amount' => $payment->padi_amount,
-                ]);
+            // Handle Transition entry (update if exists, create if not)
+            if ($payment->status == 1 || $payment->status == 3 || $payment->status == 4) {
+                $amount = $payment->status == 1 ? $payment->amount : $payment->padi_amount;
+
+                $existingTransition = Transition::where('payment_id', $payment->id)->first();
+
+                if ($existingTransition) {
+                    $existingTransition->amount = $amount;
+                    $existingTransition->save();
+                } else {
+                    Transition::create([
+                        'payment_id' => $payment->id,
+                        'amount' => $amount,
+                    ]);
+                }
             }
 
             // Save activity
@@ -57,14 +61,11 @@ class PaymentController extends Controller
                 'relatable_id' => $paymentId,
                 'type' => 'payment',
                 'user_id' => Auth::id(),
-                'description' => 'update payment status : ' . $payment->status . 'to' . $request->input('status'),
+                'description' => 'update payment status: ' . $payment->status . ' to ' . $request->input('status'),
             ]);
 
-
-            // Commit the transaction
             DB::commit();
 
-            // Return success response
             return response()->json([
                 'success' => true,
                 'status' => 200,
@@ -76,10 +77,8 @@ class PaymentController extends Controller
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
-            // Rollback the transaction in case of error
             DB::rollBack();
 
-            // Handle exceptions and return error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -89,6 +88,7 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
 
     // update padi amount
     public function updatePadiAmount(Request $request, $paymentId)
