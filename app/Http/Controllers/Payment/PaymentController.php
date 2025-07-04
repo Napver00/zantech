@@ -35,16 +35,28 @@ class PaymentController extends Controller
                 ], 404);
             }
 
-            // Update the payment status
-            $payment->status = $request->input('status');
+            // Store the old status for activity logging
+            $oldStatus = $payment->status;
+            $inputStatus = $request->input('status');
+
+            // Update payment status and payment_type based on the new logic
+            if ($inputStatus == 0) {
+                // If status is 0, both payment status and payment_type are 0
+                $payment->status = 0;
+                $payment->payment_type = 0;
+            } else {
+                // If status is 1, 3, or 4, payment status becomes 1 and payment_type is the provided status
+                $payment->status = 1;
+                $payment->payment_type = $inputStatus;
+            }
+
             $payment->save();
 
             // Handle Transition entry (update if exists, create if not)
-            if ($payment->status == 1 || $payment->status == 3 || $payment->status == 4) {
-                $amount = $payment->status == 1 ? $payment->amount : $payment->padi_amount;
+            if ($payment->status == 1) { // Only create/update transition when status is 1
+                $amount = $payment->payment_type == 1 ? $payment->amount : $payment->padi_amount;
 
                 $existingTransition = Transition::where('payment_id', $payment->id)->first();
-
                 if ($existingTransition) {
                     $existingTransition->amount = $amount;
                     $existingTransition->save();
@@ -54,6 +66,9 @@ class PaymentController extends Controller
                         'amount' => $amount,
                     ]);
                 }
+            } else {
+                // If status is 0, remove any existing transition
+                Transition::where('payment_id', $payment->id)->delete();
             }
 
             // Save activity
@@ -61,7 +76,7 @@ class PaymentController extends Controller
                 'relatable_id' => $paymentId,
                 'type' => 'payment',
                 'user_id' => Auth::id(),
-                'description' => 'update payment status: ' . $payment->status . ' to ' . $request->input('status'),
+                'description' => 'update payment status: ' . $oldStatus . ' to ' . $payment->status . ' (payment_type: ' . $payment->payment_type . ')',
             ]);
 
             DB::commit();
@@ -73,12 +88,12 @@ class PaymentController extends Controller
                 'data' => [
                     'payment_id' => $payment->id,
                     'new_status' => $payment->status,
+                    'payment_type' => $payment->payment_type,
                 ],
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-
             return response()->json([
                 'success' => false,
                 'status' => 500,
