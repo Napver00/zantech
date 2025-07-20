@@ -20,8 +20,14 @@ class AdminDashboardController extends Controller
             // Get the count of new orders (status = 0)
             $newOrderCount = Order::where('status', 0)->count();
 
+            // Get today's total sales count from orders table (current date)
+            $todayOrderCount = Order::whereDate('created_at', now()->toDateString())->count();
+
             // Get the total revenue amount from the transitions table
             $totalRevenue = Transition::sum('amount');
+
+            // Get today's total sales amount from transitions table (current date)
+            $todayRevenue = Transition::whereDate('created_at', now()->toDateString())->sum('amount');
 
             return response()->json([
                 'success' => true,
@@ -30,7 +36,9 @@ class AdminDashboardController extends Controller
                 'data' => [
                     'total_order_count' => $totalOrderCount,
                     'new_order_count' => $newOrderCount,
+                    'today_order_count' => $todayOrderCount,
                     'total_revenue' => $totalRevenue,
+                    'today_revenue' => $todayRevenue,
                 ],
             ]);
         } catch (\Exception $e) {
