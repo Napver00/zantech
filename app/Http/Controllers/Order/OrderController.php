@@ -515,6 +515,9 @@ class OrderController extends Controller
     {
         return [
             'order' => [
+                'order_id' => $order->id,
+                'user_id' => $order->user_id ?? null,
+                'shipping_id' => $order->shipping_id ?? null,
                 'user_name' => $order->user_name ?? null,
                 'user_phone' => $order->phone ?? null,
                 'address' => $order->address ?? null,
@@ -528,12 +531,14 @@ class OrderController extends Controller
                 'created_at' => $order->created_at->format('Y-m-d H:i:s'),
             ],
             'user' => $order->user ? [
+                'user_id' => $order->user->id,
                 'name' => $order->user->name,
                 'email' => $order->user->email,
                 'phone' => $order->user->phone,
                 'address' => $order->user->address,
             ] : null,
             'shipping_address' => $order->shippingAddress ? [
+                'shipping_id' => $order->shippingAddress->id,
                 'f_name' => $order->shippingAddress->f_name,
                 'l_name' => $order->shippingAddress->l_name,
                 'phone' => $order->shippingAddress->phone,
@@ -936,6 +941,114 @@ class OrderController extends Controller
                 'message' => 'Failed to add product to order.',
                 'data' => null,
                 'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // shwo due amount of all orders in dashboard
+    public function getOrderSummary(Request $request)
+    {
+        try {
+            $query = Order::with(['user', 'payment'])->orderBy('created_at', 'desc');
+
+            if ($request->has('search')) {
+                $search = $request->input('search');
+                $query->where(function ($q) use ($search) {
+                    $q->where('invoice_code', 'like', "%$search%")
+                        ->orWhereHas('user', function ($userQ) use ($search) {
+                            $userQ->where('name', 'like', "%$search%")
+                                ->orWhere('phone', 'like', "%$search%");
+                        });
+                });
+            }
+
+            if ($request->has(['start_date', 'end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($request->start_date)->startOfDay(),
+                    Carbon::parse($request->end_date)->endOfDay(),
+                ]);
+            }
+
+            $orders = $query->get();
+
+            $formattedOrders = $orders->map(function ($order) {
+                $payment = $order->payment;
+
+                $paidAmount = $payment?->padi_amount ?? 0;
+                $totalAmount = $payment?->amount ?? $order->total_amount ?? 0;
+                $dueAmount = $totalAmount - $paidAmount;
+
+                if ($dueAmount <= 0) {
+                    return null; // filter out fully paid orders
+                }
+
+                return [
+                    'user_name' => $order->user?->name ?? $order->user_name,
+                    'user_phone' => $order->user?->phone ?? $order->phone,
+                    'user_email' => $order->user?->email ?? null,
+                    'order_id' => $order->id,
+                    'invoice_code' => $order->invoice_code,
+                    'status' => $order->status,
+                    'total_amount' => $totalAmount,
+                    'paid_amount' => $paidAmount,
+                    'due_amount' => $dueAmount,
+                    'order_placed_date_time' => $order->created_at->format('Y-m-d H:i:s'),
+                ];
+            })->filter(); 
+
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Order summary fetched successfully.',
+                'data' => $formattedOrders,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Something went wrong.',
+                'errors' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // updaet customer address
+    public function updateCustomerInfo(Request $request, $order_Id)
+    {
+        $request->validate([
+            'user_name' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'address' => 'nullable|string',
+        ]);
+
+        try {
+            $order = Order::findOrFail($order_Id);
+
+            // Ensure it's a guest order before updating
+            if ($order->user_id !== null || $order->shipping_id !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This order belongs to a registered user and cannot be updated this way.',
+                ], 400);
+            }
+
+            $order->update([
+                'user_name' => $request->input('user_name', $order->user_name),
+                'user_phone' => $request->input('phone', $order->user_phone),
+                'address' => $request->input('address', $order->address),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order customer info updated successfully!',
+                'data' => $order
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
