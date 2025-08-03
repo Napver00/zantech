@@ -739,4 +739,41 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    public function getItemBuyingHistory($item_id)
+    {
+        try {
+            $items = Challan_item::with(['challan.supplier'])
+                ->where('item_id', $item_id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $formatted = $items->map(function ($item) {
+                return [
+                    'item_id'       => $item->item_id,
+                    'item_name'     => $item->item_name,
+                    'quantity'      => $item->quantity,
+                    'buying_price'  => $item->buying_price,
+                    'created_at'    => $item->created_at->toDateTimeString(),
+                    'challan_id'    => $item->challan_id,
+                    'challan_date'  => optional($item->challan)->Date,
+                    'supplier_name' => optional($item->challan->supplier)->name,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Buying history fetched successfully.',
+                'data' => $formatted
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Something went wrong.',
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
 }

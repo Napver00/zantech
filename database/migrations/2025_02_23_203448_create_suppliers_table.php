@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('phone')->unique();
             $table->string('phone2')->nullable();
             $table->string('address');
+            $table->string('paid_amount')->default('0');
             $table->timestamps();
         });
     }

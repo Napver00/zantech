@@ -12,5 +12,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{suppliers_id}', [SupplierController::class, 'show']);
         Route::put('/{suppliers_id}', [SupplierController::class, 'update']);
         Route::delete('/{suppliers_id}', [SupplierController::class, 'delete']);
+
+        Route::put('/update-paid-amount/{suppliers_id}', [SupplierController::class, 'updatePaidAmount']);
+
     });
 });

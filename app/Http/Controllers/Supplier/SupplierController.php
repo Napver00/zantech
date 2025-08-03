@@ -58,15 +58,12 @@ class SupplierController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get 'limit', 'page', and 'search' from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
             $search = $request->input('search');
 
-            // Base query to fetch suppliers with descending order by 'created_at'
-            $query = Supplier::query()->orderBy('created_at', 'desc');
+            $query = Supplier::query()->with('challans')->orderBy('created_at', 'desc');
 
-            // Apply search filter if 'search' parameter is provided
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', '%' . $search . '%')
@@ -74,9 +71,25 @@ class SupplierController extends Controller
                 });
             }
 
-            // If pagination parameters are provided, apply pagination
+            $formatSupplier = function ($supplier) {
+                // Sum of item prices (total - delivery_price) from all challans
+                $itemPriceTotal = $supplier->challans->sum(function ($challan) {
+                    return ($challan->total - $challan->delivery_price);
+                });
+
+                return [
+                    'id'            => $supplier->id,
+                    'name'          => $supplier->name,
+                    'phone'         => $supplier->phone,
+                    'address'       => $supplier->address,
+                    'paid_amount'   => $supplier->paid_amount,
+                    'total_amount'    => $itemPriceTotal,
+                    'due_amount'    => $itemPriceTotal - $supplier->paid_amount,
+                    'created_at'    => $supplier->created_at->toDateTimeString(),
+                ];
+            };
+
             if ($perPage && $currentPage) {
-                // Validate pagination parameters
                 if (!is_numeric($perPage) || !is_numeric($currentPage) || $perPage <= 0 || $currentPage <= 0) {
                     return response()->json([
                         'success' => false,
@@ -87,15 +100,15 @@ class SupplierController extends Controller
                     ], 400);
                 }
 
-                // Apply pagination
                 $suppliers = $query->paginate($perPage, ['*'], 'page', $currentPage);
 
-                // Return response with pagination data
+                $formatted = $suppliers->map($formatSupplier);
+
                 return response()->json([
                     'success' => true,
                     'status' => 200,
                     'message' => 'Suppliers retrieved successfully.',
-                    'data' => $suppliers->items(),
+                    'data' => $formatted,
                     'pagination' => [
                         'total_rows' => $suppliers->total(),
                         'current_page' => $suppliers->currentPage(),
@@ -106,18 +119,17 @@ class SupplierController extends Controller
                 ], 200);
             }
 
-            // If no pagination parameters, fetch all records without pagination
+            // If no pagination
             $suppliers = $query->get();
+            $formatted = $suppliers->map($formatSupplier);
 
-            // Return response without pagination links
             return response()->json([
                 'success' => true,
                 'status' => 200,
                 'message' => 'Suppliers retrieved successfully.',
-                'data' => $suppliers
-            ], 200);
+                'data' => $formatted
+            ]);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -127,6 +139,7 @@ class SupplierController extends Controller
             ], 500);
         }
     }
+
 
 
     // shwo single supplier
@@ -264,6 +277,47 @@ class SupplierController extends Controller
                 'message' => 'An error occurred while deleting the supplier.',
                 'data' => null,
                 'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updatePaidAmount(Request $request, $updatePaidAmount)
+    {
+        try {
+            $request->validate([
+                'paid_amount' => 'required|numeric|min:0'
+            ]);
+
+            $supplier = Supplier::find($updatePaidAmount);
+
+            if (!$supplier) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Supplier not found.',
+                    'data' => null
+                ], 404);
+            }
+
+            $supplier->paid_amount = $request->paid_amount;
+            $supplier->save();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Paid amount updated successfully.',
+                'data' => [
+                    'id' => $supplier->id,
+                    'name' => $supplier->name,
+                    'paid_amount' => $supplier->paid_amount,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Something went wrong.',
+                'errors' => $e->getMessage()
             ], 500);
         }
     }

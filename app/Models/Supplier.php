@@ -13,7 +13,8 @@ class Supplier extends Model
         'name',
         'phone',
         'phone2',
-        'address'
+        'address',
+        'paid_amount'
     ];
 
     // Relationship with Challan
