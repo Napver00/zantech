@@ -154,8 +154,9 @@ class ChallanController extends Controller
             $response = [
                 'id' => $challan->id,
                 'Date' => $challan->Date,
-                'total' => $challan->total,
+                'totalproductprice'=>$challan->total - $challan->delivery_price,
                 'delivery_price' => $challan->delivery_price,
+                'total' => $challan->total,
                 'supplier' => $challan->supplier ? [
                     'name' => $challan->supplier->name,
                     'phone' => $challan->supplier->phone,
@@ -253,8 +254,9 @@ class ChallanController extends Controller
                     return [
                         'id' => $challan->id,
                         'Date' => $challan->Date,
-                        'total' => $challan->total,
+                        'totalproductprice'=>$challan->total - $challan->delivery_price,
                         'delivery_price' => $challan->delivery_price,
+                        'total' => $challan->total,
                         'supplier' => $challan->supplier ? [
                             'name' => $challan->supplier->name,
                             'phone' => $challan->supplier->phone,
