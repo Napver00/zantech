@@ -12,6 +12,7 @@ use App\Models\Tag;
 use App\Models\BundleItem;
 use App\Models\Cetagory_Product_list;
 use App\Models\Cetagory;
+use App\Models\Challan_item;
 use Illuminate\Support\Str;
 
 
@@ -662,6 +663,78 @@ class ProductController extends Controller
                 'status' => 500,
                 'message' => 'An error occurred while retrieving products.',
                 'data' => null,
+                'errors' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Get items by buying price
+    public function getitemsByBuyingPrice(Request $request)
+    {
+        try {
+            $perPage = $request->input('limit', 10);
+            $currentPage = $request->input('page', 1);
+            $search = $request->input('search');
+            $date = $request->input('date');
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+
+            // Base query
+            $query = Challan_item::with(['item', 'challan.supplier'])
+                ->orderBy('created_at', 'desc');
+
+            // Filter by item_name
+            if ($search) {
+                $query->where('item_name', 'like', '%' . $search . '%');
+            }
+
+            // Filter by exact date
+            if ($date) {
+                $query->whereDate('created_at', $date);
+            }
+
+            // Filter by date range
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            // Get all and then unique by item_id (latest only)
+            $items = $query->get()
+                ->unique('item_id')
+                ->values();
+
+            // Manual pagination
+            $total = $items->count();
+            $pagedItems = $items->forPage($currentPage, $perPage)->values();
+
+            $formatted = $pagedItems->map(function ($item) {
+                return [
+                    'item_id'       => $item->item_id,
+                    'item_name'     => $item->item_name,
+                    'buying_price'  => $item->buying_price,
+                    'created_at'    => $item->created_at->toDateTimeString(),
+                    'supplier_name' => optional($item->challan->supplier)->name,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Items retrieved successfully.',
+                'data' => $formatted,
+                'pagination' => [
+                    'total_rows' => $total,
+                    'current_page' => (int) $currentPage,
+                    'per_page' => (int) $perPage,
+                    'total_pages' => ceil($total / $perPage),
+                    'has_more_pages' => ($currentPage * $perPage) < $total,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Something went wrong.',
                 'errors' => $e->getMessage()
             ], 500);
         }

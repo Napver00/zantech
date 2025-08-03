@@ -31,4 +31,5 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/delete/{bundleId}', [BundleItemController::class, 'deleteBundle']);
         });
     });
+    Route::get('/buying-price-items', [ProductController::class, 'getitemsByBuyingPrice']);
 });
