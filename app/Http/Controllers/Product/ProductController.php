@@ -291,6 +291,7 @@ class ProductController extends Controller
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
+                        'short_description' => $product->short_description,
                         'status' => $product->status,
                         'quantity' => $product->quantity,
                         'price' => $product->price,
@@ -774,6 +775,129 @@ class ProductController extends Controller
                 'message' => 'Something went wrong.',
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+    // Get in-stock products
+    public function inStockProducts(Request $request)
+    {
+        try {
+            // Get 'limit', 'page', 'search', 'min_price', and 'max_price' from request
+            $perPage = $request->input('limit');
+            $currentPage = $request->input('page');
+            $search = $request->input('search');
+            $minPrice = $request->input('min_price');
+            $maxPrice = $request->input('max_price');
+
+            // Base query to fetch products with all related images of type 'product'
+            $query = Item::with(['images' => function ($query) {
+                $query->where('type', 'product')->orderBy('id', 'asc');
+            }])->orderBy('created_at', 'desc');
+
+            // Exclude items with quantity <= 0
+            $query->where('quantity', '>', 0);
+
+
+            // Apply search filter if 'search' parameter is provided
+            if ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            }
+
+            // Apply price range filter if 'min_price' and 'max_price' are provided
+            if ($minPrice) {
+                $query->where('price', '>=', $minPrice);
+            }
+            if ($maxPrice) {
+                $query->where('price', '<=', $maxPrice);
+            }
+
+            // If pagination parameters are provided, apply pagination
+            if ($perPage && $currentPage) {
+                // Validate pagination parameters
+                if (!is_numeric($perPage) || !is_numeric($currentPage) || $perPage <= 0 || $currentPage <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'status' => 400,
+                        'message' => 'Invalid pagination parameters.',
+                        'data' => null,
+                        'errors' => 'Invalid pagination parameters.',
+                    ], 400);
+                }
+
+                // Apply pagination
+                $products = $query->paginate($perPage, ['*'], 'page', $currentPage);
+
+                // Format the response with pagination data
+                $formattedProducts = $products->map(function ($product) {
+                    // Collect all image paths for this product
+                    $imagePaths = $product->images->map(function ($image) {
+                        return asset('storage/' . str_replace('public/', '', $image->path));
+                    })->toArray();
+
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'status' => $product->status,
+                        'quantity' => $product->quantity,
+                        'price' => $product->price,
+                        'discount' => $product->discount,
+                        'image_paths' => $imagePaths,
+                    ];
+                });
+
+                // Return response with pagination data
+                return response()->json([
+                    'success' => true,
+                    'status' => 200,
+                    'message' => 'Products retrieved successfully.',
+                    'data' => $formattedProducts,
+                    'pagination' => [
+                        'total_rows' => $products->total(),
+                        'current_page' => $products->currentPage(),
+                        'per_page' => $products->perPage(),
+                        'total_pages' => $products->lastPage(),
+                        'has_more_pages' => $products->hasMorePages(),
+                    ]
+                ], 200);
+            }
+
+            // If no pagination parameters, fetch all records without pagination
+            $products = $query->get();
+
+            // Format the response
+            $formattedProducts = $products->map(function ($product) {
+                // Collect all image paths for this product
+                $imagePaths = $product->images->map(function ($image) {
+                    return asset('storage/' . str_replace('public/', '', $image->path));
+                })->toArray();
+
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'status' => $product->status,
+                    'quantity' => $product->quantity,
+                    'price' => $product->price,
+                    'discount' => $product->discount,
+                    'image_paths' => $imagePaths,
+                ];
+            });
+
+            // Return response without pagination links
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Products retrieved successfully.',
+                'data' => $formattedProducts
+            ], 200);
+        } catch (\Exception $e) {
+            // Handle any exceptions
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while retrieving products.',
+                'data' => null,
+                'errors' => $e->getMessage()
+            ], 500);
         }
     }
 }

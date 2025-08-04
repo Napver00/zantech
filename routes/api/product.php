@@ -31,7 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/delete/{bundleId}', [BundleItemController::class, 'deleteBundle']);
         });
     });
+    Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
     Route::get('/buying-price-items', [ProductController::class, 'getitemsByBuyingPrice']);
     Route::get('/item-buying-history/{item_id}', [ProductController::class, 'getItemBuyingHistory']);
-
 });
