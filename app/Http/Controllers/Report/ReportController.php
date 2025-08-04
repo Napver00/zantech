@@ -7,6 +7,8 @@ use App\Services\ReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\Order_list;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -116,5 +118,34 @@ class ReportController extends Controller
             'data' => null,
             'errors' => $error,
         ], $code);
+    }
+
+    public function topSellingItems()
+    {
+        $topItems = Order_list::select(
+            'product_id',
+            DB::raw('SUM(quantity) as total_sold')
+        )
+            ->groupBy('product_id')
+            ->orderByDesc('total_sold')
+            ->with(['item' => function ($q) {
+                $q->with(['images' => function ($imgQuery) {
+                }])->select('id', 'name', 'price');
+            }])
+            ->get()
+            ->map(function ($orderList) {
+                return [
+                    'item_id'    => $orderList->product_id,
+                    'name'       => $orderList->item->name ?? 'N/A',
+                    'price'      => $orderList->item->price ?? 0,
+
+                    'total_sold' => $orderList->total_sold
+                ];
+            });
+
+        return $this->successResponse(
+            'Top selling items retrieved successfully.',
+            $topItems
+        );
     }
 }
