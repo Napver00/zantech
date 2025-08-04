@@ -8,6 +8,7 @@ return [
     'allowed_origins' => [
         'http://localhost:3000',
         'http://localhost:5173',
+        'https://storeadmin.zantechbd.com',
     ],
 
     'allowed_headers' => ['*'],
