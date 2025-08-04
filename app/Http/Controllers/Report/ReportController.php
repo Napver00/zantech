@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order_list;
 use Illuminate\Support\Facades\DB;
+use App\Models\Order;
+use App\Models\Cetagory;
+use App\Models\Item;
+use App\Models\User;
+use App\Models\Expense;
 
 class ReportController extends Controller
 {
@@ -148,4 +153,39 @@ class ReportController extends Controller
             $topItems
         );
     }
+
+    /**
+     * Sales Over Time Report
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function salesOverTime(Request $request)
+    {
+        $request->validate([
+            'period' => 'in:daily,weekly,monthly',
+        ]);
+
+        $period = $request->input('period', 'daily');
+        $format = match ($period) {
+            'weekly' => '%Y-%u',
+            'monthly' => '%Y-%m',
+            default => '%Y-%m-%d',
+        };
+
+        $sales = Order::select(
+            DB::raw("DATE_FORMAT(created_at, '$format') as date"),
+            DB::raw('SUM(total_amount) as total_sales'),
+            DB::raw('COUNT(*) as order_count')
+        )
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        return $this->successResponse(
+            'Sales over time retrieved successfully.',
+            $sales
+        );
+    }
+
 }
