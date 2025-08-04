@@ -900,4 +900,57 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    // show all product except bundle
+    public function showallproductsExceptBundles(Request $request)
+    {
+        try {
+            $search = $request->input('search');
+
+            $query = Item::with(['images' => function ($query) {
+                $query->where('type', 'product')->orderBy('id', 'asc');
+            }])
+                ->where('status', '!=', 0)
+                ->where('is_bundle', 0)
+                ->orderBy('created_at', 'desc');
+
+            if ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            }
+
+            $products = $query->get();
+
+            $formattedProducts = $products->map(function ($product) {
+                $imagePaths = $product->images->map(function ($image) {
+                    return asset('storage/' . str_replace('public/', '', $image->path));
+                })->toArray();
+
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'short_description' => $product->short_description,
+                    'status' => $product->status,
+                    'quantity' => $product->quantity,
+                    'price' => $product->price,
+                    'discount' => $product->discount,
+                    'image_paths' => $imagePaths,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Products retrieved successfully.',
+                'data' => $formattedProducts
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while retrieving products.',
+                'data' => null,
+                'errors' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
