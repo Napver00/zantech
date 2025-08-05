@@ -120,14 +120,15 @@ class ProductController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
                     $filename = time() . '_' . $image->getClientOriginalName();
-                    $path = $image->move(public_path('product_image'), $filename);
+                    $image->move(public_path('product_image'), $filename);
 
-                    $fullPath = env('APP_URL') . '/product_image/' . $filename;
+                    // Just save the relative path in DB
+                    $relativePath = 'product_image/' . $filename;
 
                     File::create([
                         'relatable_id' => $product->id,
                         'type' => 'product',
-                        'path' => $fullPath,
+                        'path' => $relativePath,
                     ]);
                 }
             }
@@ -300,8 +301,9 @@ class ProductController extends Controller
                 $formattedProducts = $products->map(function ($product) {
                     // Collect all image paths for this product
                     $imagePaths = $product->images->map(function ($image) {
-                        return asset('storage/' . str_replace('public/', '', $image->path));
+                        return url('public/' . $image->path);
                     })->toArray();
+
 
                     return [
                         'id' => $product->id,
@@ -338,8 +340,9 @@ class ProductController extends Controller
             $formattedProducts = $products->map(function ($product) {
                 // Collect all image paths for this product
                 $imagePaths = $product->images->map(function ($image) {
-                    return asset('storage/' . str_replace('public/', '', $image->path));
+                    return url('public/' . $image->path);
                 })->toArray();
+
 
                 return [
                     'id' => $product->id,
