@@ -89,10 +89,10 @@ class HeroSectionController extends Controller
     {
         try {
             // Find the image by ID
-            $image = File::where('type', 'hero')->find($id);
+            $image = File::find($id);
 
-            // If the image doesn't exist, return a 404 response
-            if (!$image) {
+            // If the image doesn't exist or is not a hero type, return a 404 response
+            if (!$image || $image->type !== 'hero') {
                 return response()->json([
                     'success' => false,
                     'status' => 404,
@@ -102,10 +102,13 @@ class HeroSectionController extends Controller
                 ], 404);
             }
 
-            // Delete the image from storage
-            Storage::delete('public/' . $image->path);
+            // Delete the physical file from public directory
+            $fullPath = public_path($image->path);
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
 
-            // Delete the image from the database
+            // Delete the image record from the database
             $image->delete();
 
             // Return the response in the specified format
