@@ -21,7 +21,6 @@ class ExpenseController extends Controller
                 'date' => 'required|date',
                 'title' => 'required|string|max:255',
                 'amount' => 'required|numeric|min:0',
-                'prove.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:3048',
                 'prove' => 'nullable|array',
                 'description' => 'nullable|string',
             ]);
@@ -44,7 +43,6 @@ class ExpenseController extends Controller
                 'description' => $request->description,
             ]);
 
-            $filePaths = [];
 
             // Handle multiple file uploads
 
@@ -73,7 +71,6 @@ class ExpenseController extends Controller
                     'title' => $expense->title,
                     'amount' => $expense->amount,
                     'description' => $expense->description,
-                    'proves' => $filePaths,
                 ],
             ], 201);
         } catch (\Exception $e) {
