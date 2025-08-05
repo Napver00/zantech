@@ -559,7 +559,7 @@ class OrderController extends Controller
                         'price' => $bundleItem->bundleItem->price,
                         'discount' => $bundleItem->bundleItem->discount,
                         'is_bundle' => $bundleItem->bundleItem->is_bundle,
-                        'image' => asset('storage/' . str_replace('public/', '', $bundleItem->bundleItem->images->first())) ? asset('storage/' . str_replace('public/', '', $bundleItem->bundleItem->images->first()->path)) : null,
+                        'image' => url('public/', '', $bundleItem->bundleItem->images->first()) ? url('public/', '', $bundleItem->bundleItem->images->first()->path): null,
                     ];
                 }) : null;
 
@@ -570,7 +570,7 @@ class OrderController extends Controller
                     'price' => $orderItem->price,
                     'is_bundle' => $item->is_bundle,
                     'bundle_items' => $bundleItems,
-                    'image' => asset('storage/' . str_replace('public/', '', $item->images->first()))  ? asset('storage/' . str_replace('public/', '', $item->images->first()->path)) : null,
+                    'image' => url('public/', '', $item->images->first()) ? url('public/', '', $item->images->first()->path) : null,
                 ];
             }),
             'payments' => $order->payments->map(function ($payment) {
@@ -994,7 +994,7 @@ class OrderController extends Controller
                     'due_amount' => $dueAmount,
                     'order_placed_date_time' => $order->created_at->format('Y-m-d H:i:s'),
                 ];
-            })->filter(); 
+            })->filter();
 
 
             return response()->json([
