@@ -212,7 +212,7 @@ class ExpenseController extends Controller
                 'title' => 'sometimes|string|max:255',
                 'description' => 'sometimes|string',
                 'amount' => 'sometimes|numeric|min:0',
-                'proves.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+                'prove.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:3048',
                 'prove' => 'nullable|array',
             ]);
 
@@ -274,7 +274,6 @@ class ExpenseController extends Controller
                         'path' => $relativePath,
                     ]);
                 }
-                $changes[] = "New prove files uploaded";
             }
 
             // Log changes
