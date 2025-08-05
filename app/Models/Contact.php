@@ -10,9 +10,10 @@ class Contact extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
+        'f_name',
+        'l_name',
         'email',
-        'phone',
+        'project_type',
         'message',
     ];
 }
