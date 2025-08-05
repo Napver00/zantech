@@ -270,7 +270,7 @@ class ExpenseController extends Controller
                     // Create a File record for each uploaded file
                     File::create([
                         'relatable_id' => $expense->id,
-                        'type' => 'expense', // Or whatever your polymorphic relation type is
+                        'type' => 'expense',
                         'path' => $relativePath,
                     ]);
                 }
