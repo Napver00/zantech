@@ -101,12 +101,10 @@ class FileController extends Controller
                     File::create([
                         'relatable_id' => $product_id,
                         'type' => 'product',
-                        'path' => $relativePath, 
+                        'path' => $relativePath,
                     ]);
                 }
             }
-
-
 
             // Return success response
             return response()->json([
