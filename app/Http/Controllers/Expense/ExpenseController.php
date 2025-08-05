@@ -46,22 +46,28 @@ class ExpenseController extends Controller
 
             $filePaths = [];
 
-            // Handle multiple file uploads
-
+            // Handle multiple file uploads by looping
             if ($request->hasFile('prove')) {
-                $image = $request->file('prove');
-                $filename = time() . '_' . $image->getClientOriginalName();
-                $image->move(public_path('expense'), $filename);
+                // $request->file('prove') will be an array of files
+                foreach ($request->file('prove') as $file) {
+                    // Generate a unique filename to prevent overwrites
+                    $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
 
-                $relativePath = 'expense/' . $filename;
+                    // Move the file to the public/expense directory
+                    $file->move(public_path('expense'), $filename);
 
-                File::create([
-                    'relatable_id' => $expense->id,
-                    'type' => 'expense',
-                    'path' => $relativePath,
-                ]);
+                    // Create the relative path to store in the database
+                    $relativePath = 'expense/' . $filename;
+                    $filePaths[] = $relativePath;
+
+                    // Create a File record for each uploaded file
+                    File::create([
+                        'relatable_id' => $expense->id,
+                        'type' => 'expense', 
+                        'path' => $relativePath,
+                    ]);
+                }
             }
-
             return response()->json([
                 'success' => true,
                 'status' => 201,
