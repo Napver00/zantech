@@ -34,8 +34,8 @@ class AmbassadorController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('product_image'), $filename);
-            $imagePath = 'product_image/' . $filename;
+            $image->move(public_path('ambassador'), $filename);
+            $imagePath = 'ambassador/' . $filename;
         }
 
         $app = AmbassadorApplication::create([
