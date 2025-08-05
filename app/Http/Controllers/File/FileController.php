@@ -76,6 +76,20 @@ class FileController extends Controller
                 ], 404);
             }
 
+            // If file_id is provided, use the existing image path
+            if ($request->has('file_id')) {
+                $existingFile = File::find($request->file_id);
+
+                if ($existingFile) {
+                    File::create([
+                        'relatable_id' => $product_id,
+                        'type' => 'product',
+                        'path' => $existingFile->path,
+                    ]);
+                }
+            }
+
+
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
                     $filename = time() . '_' . $image->getClientOriginalName();
@@ -87,28 +101,14 @@ class FileController extends Controller
                     File::create([
                         'relatable_id' => $product_id,
                         'type' => 'product',
-                        'path' => $relativePath,
-                    ]);
-                }
-            }
-
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
-                    $filename = time() . '_' . $image->getClientOriginalName();
-                    $path = $image->move(public_path('product_image'), $filename);
-
-                    $fullPath = env('APP_URL') . '/product_image/' . $filename;
-
-                    File::create([
-                        'relatable_id' => $product_id,
-                        'type' => 'product',
-                        'path' => $fullPath,
+                        'path' => $relativePath, 
                     ]);
                 }
             }
 
 
-            // Return success responsez
+
+            // Return success response
             return response()->json([
                 'success' => true,
                 'status' => 200,
