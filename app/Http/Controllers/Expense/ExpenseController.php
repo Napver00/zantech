@@ -44,8 +44,6 @@ class ExpenseController extends Controller
                 'description' => $request->description,
             ]);
 
-            $filePaths = [];
-
             // Handle multiple file uploads by looping
             if ($request->hasFile('prove')) {
                 // $request->file('prove') will be an array of files
@@ -80,7 +78,6 @@ class ExpenseController extends Controller
                     'title' => $expense->title,
                     'amount' => $expense->amount,
                     'description' => $expense->description,
-                    'proves' => $filePaths,
                 ],
             ], 201);
         } catch (\Exception $e) {
