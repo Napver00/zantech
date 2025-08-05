@@ -71,7 +71,7 @@ class HeroSectionController extends Controller
 
             // Transform image paths to full URLs
             $heroImages->transform(function ($image) {
-                $image->path = asset('storage/' . $image->path);
+                $image->path = url('public/' . $image->path);
                 return $image;
             });
 

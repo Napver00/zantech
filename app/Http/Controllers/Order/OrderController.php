@@ -56,7 +56,7 @@ class OrderController extends Controller
             DB::commit();
 
             // Dispatch the job to send emails asynchronously
-            dispatch(new SendOrderEmailsJob($order));
+            // dispatch(new SendOrderEmailsJob($order));
 
             // Return success response
             return $this->successResponse($order, 'Order placed successfully.');
