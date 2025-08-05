@@ -204,17 +204,13 @@ class ExpenseController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            // Add debugging to check if files are being received
-            \Log::info('Update request files:', ['files' => $request->allFiles()]);
-            \Log::info('Has prove files:', ['has_prove' => $request->hasFile('prove')]);
-
             // Validate the request data
             $validator = Validator::make($request->all(), [
                 'title' => 'sometimes|string|max:255',
                 'description' => 'sometimes|string',
                 'amount' => 'sometimes|numeric|min:0',
-                'prove.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:3048',
-                'prove' => 'nullable|array',
+                'proves.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:3048',
+                'proves' => 'nullable|array',
             ]);
 
             // If validation fails, return error response
@@ -243,74 +239,38 @@ class ExpenseController extends Controller
             // Store old values for comparison
             $oldValues = $expense->getAttributes();
 
-            // Update fields (remove user_id from update as it shouldn't change)
-            $expense->update($request->only(['title', 'description', 'amount']));
+            // Update fields
+            $expense->update($request->only(['title', 'description', 'amount', 'user_id']));
 
             // Compare for change log
             $newValues = $expense->getAttributes();
             $changes = [];
-            foreach ($request->only(['title', 'description', 'amount']) as $key => $value) {
+            foreach ($request->all() as $key => $value) {
                 if (array_key_exists($key, $oldValues) && $oldValues[$key] != $newValues[$key]) {
                     $changes[] = "{$key} changed from '{$oldValues[$key]}' to '{$newValues[$key]}'";
                 }
             }
 
-            // Initialize file paths array for response
-            $filePaths = [];
-
             // Upload and save multiple prove files if provided
-            if ($request->hasFile('prove')) {
-                \Log::info('Processing prove files...');
+            if ($request->hasFile('proves')) {
+                // $request->file('prove') will be an array of files
+                foreach ($request->file('proves') as $file) {
+                    // Generate a unique filename to prevent overwrites
+                    $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
 
-                // Ensure the expense directory exists
-                $expenseDir = public_path('expense');
-                if (!file_exists($expenseDir)) {
-                    mkdir($expenseDir, 0755, true);
+                    // Move the file to the public/expense directory
+                    $file->move(public_path('expense'), $filename);
+
+                    // Create the relative path to store in the database
+                    $relativePath = 'expense/' . $filename;
+
+                    // Create a File record for each uploaded file
+                    File::create([
+                        'relatable_id' => $expense->id,
+                        'type' => 'expense',
+                        'path' => $relativePath,
+                    ]);
                 }
-
-                // Handle both single file and array of files
-                $files = $request->file('prove');
-                if (!is_array($files)) {
-                    $files = [$files];
-                }
-
-                foreach ($files as $file) {
-                    if ($file->isValid()) {
-                        // Generate a unique filename to prevent overwrites
-                        $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
-
-                        // Move the file to the public/expense directory
-                        $moved = $file->move($expenseDir, $filename);
-
-                        if ($moved) {
-                            // Create the relative path to store in the database
-                            $relativePath = 'expense/' . $filename;
-                            $filePaths[] = $relativePath;
-
-                            // Create a File record for each uploaded file
-                            $fileRecord = File::create([
-                                'relatable_id' => $expense->id,
-                                'type' => 'expense',
-                                'path' => $relativePath,
-                            ]);
-
-                            \Log::info('File uploaded successfully:', [
-                                'filename' => $filename,
-                                'path' => $relativePath,
-                                'file_record_id' => $fileRecord->id
-                            ]);
-
-                            // Add file upload to changes log
-                            $changes[] = "File uploaded: {$filename}";
-                        } else {
-                            \Log::error('Failed to move file:', ['filename' => $file->getClientOriginalName()]);
-                        }
-                    } else {
-                        \Log::error('Invalid file:', ['error' => $file->getError()]);
-                    }
-                }
-            } else {
-                \Log::info('No prove files in request');
             }
 
             // Log changes
@@ -328,14 +288,8 @@ class ExpenseController extends Controller
                 'status' => 200,
                 'message' => 'Expense updated successfully.',
                 'data' => $expense->load('proveFiles'),
-                'uploaded_files' => $filePaths, // Include uploaded file paths in response
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Update expense error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
             return response()->json([
                 'success' => false,
                 'status' => 500,
