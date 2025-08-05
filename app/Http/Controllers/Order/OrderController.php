@@ -570,7 +570,7 @@ class OrderController extends Controller
                     'price' => $orderItem->price,
                     'is_bundle' => $item->is_bundle,
                     'bundle_items' => $bundleItems,
-                    'image' => url('public/', '', $item->images->first()) ? url('public/', '', $item->images->first()->path) : null,
+                    'image' => url('public/' . $item->images->first()->path) ? url('public/' . $item->images->first()->path) : null,
                 ];
             }),
             'payments' => $order->payments->map(function ($payment) {
