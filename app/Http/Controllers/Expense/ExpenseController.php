@@ -21,7 +21,7 @@ class ExpenseController extends Controller
                 'date' => 'required|date',
                 'title' => 'required|string|max:255',
                 'amount' => 'required|numeric|min:0',
-                'prove' => 'nullable|array',
+                'prove' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:4048',
                 'description' => 'nullable|string',
             ]);
 
@@ -45,7 +45,6 @@ class ExpenseController extends Controller
 
 
             // Handle multiple file uploads
-
             if ($request->hasFile('prove')) {
                 $image = $request->file('prove');
                 $filename = time() . '_' . $image->getClientOriginalName();
@@ -55,7 +54,7 @@ class ExpenseController extends Controller
 
                 File::create([
                     'relatable_id' => $expense->id,
-                    'type' => 'expense',
+                    'type' => 'challan',
                     'path' => $relativePath,
                 ]);
             }
