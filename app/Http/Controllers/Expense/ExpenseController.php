@@ -63,7 +63,7 @@ class ExpenseController extends Controller
                     // Create a File record for each uploaded file
                     File::create([
                         'relatable_id' => $expense->id,
-                        'type' => 'expense', 
+                        'type' => 'expense',
                         'path' => $relativePath,
                     ]);
                 }
@@ -253,20 +253,43 @@ class ExpenseController extends Controller
             }
 
             // Upload and save multiple prove files if provided
-            if ($request->hasFile('proves')) {
-                $image = $request->file('prove');
-                $filename = time() . '_' . $image->getClientOriginalName();
-                $image->move(public_path('expense'), $filename);
+            // if ($request->hasFile('proves')) {
+            //     $image = $request->file('prove');
+            //     $filename = time() . '_' . $image->getClientOriginalName();
+            //     $image->move(public_path('expense'), $filename);
 
-                $relativePath = 'expense/' . $filename;
+            //     $relativePath = 'expense/' . $filename;
 
-                File::create([
-                    'relatable_id' => $expense->id,
-                    'type' => 'expense',
-                    'path' => $relativePath,
-                ]);
+            //     File::create([
+            //         'relatable_id' => $expense->id,
+            //         'type' => 'expense',
+            //         'path' => $relativePath,
+            //     ]);
 
-                $changes[] = "New prove files uploaded";
+            //     $changes[] = "New prove files uploaded";
+            // }
+
+                 // Handle multiple file uploads by looping
+            if ($request->hasFile('prove')) {
+                // $request->file('prove') will be an array of files
+                foreach ($request->file('prove') as $file) {
+                    // Generate a unique filename to prevent overwrites
+                    $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+
+                    // Move the file to the public/expense directory
+                    $file->move(public_path('expense'), $filename);
+
+                    // Create the relative path to store in the database
+                    $relativePath = 'expense/' . $filename;
+                    $filePaths[] = $relativePath;
+
+                    // Create a File record for each uploaded file
+                    File::create([
+                        'relatable_id' => $expense->id,
+                        'type' => 'expense',
+                        'path' => $relativePath,
+                    ]);
+                }
             }
 
             // Log changes
