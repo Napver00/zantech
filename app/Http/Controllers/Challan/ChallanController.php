@@ -103,8 +103,8 @@ class ChallanController extends Controller
             }
 
             // Save the invoice image
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
+            if ($request->hasFile('invoice')) {
+                foreach ($request->file('invoice') as $image) {
                     $filename = time() . '_' . $image->getClientOriginalName();
                     $image->move(public_path('challan'), $filename);
 
@@ -112,8 +112,8 @@ class ChallanController extends Controller
                     $relativePath = 'challan/' . $filename;
 
                     File::create([
-                        'relatable_id' => $challan->id,
-                        'type' => 'product',
+                        'relatable_id' =>  $challan->id,
+                        'type' => 'challan',
                         'path' => $relativePath,
                     ]);
                 }
@@ -676,6 +676,8 @@ class ChallanController extends Controller
                 'type' => 'challan',
                 'path' => $path,
             ]);
+
+
 
             return response()->json([
                 'success' => true,
