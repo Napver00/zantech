@@ -58,16 +58,17 @@ class ExpenseController extends Controller
 
                     // Create the relative path to store in the database
                     $relativePath = 'expense/' . $filename;
-                    $filePaths[] = $relativePath;
+                    $filePaths[] = $relativePath; // Add path to the array for the response
 
                     // Create a File record for each uploaded file
                     File::create([
                         'relatable_id' => $expense->id,
-                        'type' => 'expense',
+                        'type' => 'expense', // Or whatever your polymorphic relation type is
                         'path' => $relativePath,
                     ]);
                 }
             }
+
             return response()->json([
                 'success' => true,
                 'status' => 201,
@@ -205,78 +206,79 @@ class ExpenseController extends Controller
     // update the expense
     public function update(Request $request, $id)
     {
-        // Find the expense first, or fail.
-        $expense = Expense::find($id);
-
-        if (!$expense) {
-            return response()->json([
-                'success' => false,
-                'status' => 404,
-                'message' => 'Expense not found.',
-            ], 404);
-        }
-
-        // Validate the request data
-        $validator = Validator::make($request->all(), [
-            'title' => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-            'amount' => 'sometimes|numeric|min:0',
-            'proves' => 'nullable|array', // The 'proves' field itself is an array of new files
-            'proves.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:3048', // Validation for each new file
-            'deleted_files' => 'nullable|array', // An array of existing file IDs to delete
-            'deleted_files.*' => 'integer|exists:files,id', // Each item must be a valid file ID
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'status' => 400,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors(),
-            ], 400);
-        }
-
-
         try {
-            // Update the main expense fields
-            $expense->update($request->only(['title', 'description', 'amount']));
+            // Validate the request data
+            $validator = Validator::make($request->all(), [
+                'title' => 'sometimes|string|max:255',
+                'description' => 'sometimes|string',
+                'amount' => 'sometimes|numeric|min:0',
+                'proves.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+                'prove' => 'nullable|array',
+            ]);
 
+            // If validation fails, return error response
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 400,
+                    'message' => 'Validation errors',
+                    'errors' => $validator->errors(),
+                ], 400);
+            }
+
+            // Find the expense by ID
+            $expense = Expense::find($id);
+
+            if (!$expense) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Expense not found.',
+                    'data' => null,
+                    'errors' => 'Expense not found.',
+                ], 404);
+            }
+
+            // Store old values for comparison
+            $oldValues = $expense->getAttributes();
+
+            // Update fields
+            $expense->update($request->only(['title', 'description', 'amount', 'user_id']));
+
+            // Compare for change log
+            $newValues = $expense->getAttributes();
             $changes = [];
-
-            // --- 1. HANDLE DELETION OF EXISTING FILES ---
-            if ($request->has('deleted_files')) {
-                $filesToDelete = File::whereIn('id', $request->input('deleted_files'))
-                    ->where('relatable_id', $expense->id) // Security check!
-                    ->get();
-
-                foreach ($filesToDelete as $file) {
-                    // Delete the file from storage
-                    Storage::disk('public')->delete($file->path);
-                    // Delete the record from the database
-                    $file->delete();
-                }
-                if (count($filesToDelete) > 0) {
-                    $changes[] = 'deleted ' . count($filesToDelete) . ' file(s)';
+            foreach ($request->all() as $key => $value) {
+                if (array_key_exists($key, $oldValues) && $oldValues[$key] != $newValues[$key]) {
+                    $changes[] = "{$key} changed from '{$oldValues[$key]}' to '{$newValues[$key]}'";
                 }
             }
 
-            // --- 2. HANDLE UPLOAD OF NEW FILES ---
-            if ($request->hasFile('proves')) {
-                foreach ($request->file('proves') as $file) {
-                    // Use Laravel's store method for better security and automatic naming
-                    $path = $file->store('expense', 'public');
+            // Upload and save multiple prove files if provided
+            if ($request->hasFile('prove')) {
+                // $request->file('prove') will be an array of files
+                foreach ($request->file('prove') as $file) {
+                    // Generate a unique filename to prevent overwrites
+                    $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
 
+                    // Move the file to the public/expense directory
+                    $file->move(public_path('expense'), $filename);
+
+                    // Create the relative path to store in the database
+                    $relativePath = 'expense/' . $filename;
+                    $filePaths[] = $relativePath; // Add path to the array for the response
+
+                    // Create a File record for each uploaded file
                     File::create([
                         'relatable_id' => $expense->id,
-                        'type' => 'expense',
-                        'path' => $path,
+                        'type' => 'expense', // Or whatever your polymorphic relation type is
+                        'path' => $relativePath,
                     ]);
                 }
-                $changes[] = 'uploaded ' . count($request->file('proves')) . ' new file(s)';
+                $changes[] = "New prove files uploaded";
             }
 
-            // --- 3. LOG THE ACTIVITY ---
-            // You can refine this part based on your needs
+            // Log changes
             if (!empty($changes)) {
                 Activity::create([
                     'relatable_id' => $expense->id,
@@ -286,23 +288,18 @@ class ExpenseController extends Controller
                 ]);
             }
 
-            // Commit the transaction
-
             return response()->json([
                 'success' => true,
                 'status' => 200,
                 'message' => 'Expense updated successfully.',
-                // Load the expense with all its current files (after additions/deletions)
                 'data' => $expense->load('proveFiles'),
             ], 200);
         } catch (\Exception $e) {
-            // Rollback the transaction on error
-
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'An error occurred while updating the expense.',
-                'error' => $e->getMessage(),
+                'errors' => $e->getMessage(),
             ], 500);
         }
     }
