@@ -18,10 +18,11 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => public_path('storage'),
-            'url' => env('APP_URL') . '/storage',
+            'root' => public_path('media'),
+            'url' => env('MEDIA_URL'),
             'visibility' => 'public',
         ],
+        
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
