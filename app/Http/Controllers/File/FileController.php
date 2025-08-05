@@ -89,22 +89,21 @@ class FileController extends Controller
                 }
             }
 
-
+            
+            // If new images are uploaded, process and save them
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-                    $filename = time() . '_' . $image->getClientOriginalName();
-                    $path = $image->move(public_path('product_image'), $filename);
+                    // Store the image in the storage folder
+                    $path = $image->store('public/product_image');
 
-                    $fullPath = env('APP_URL') . '/product_image/' . $filename;
-
+                    // Save the image path in the File table
                     File::create([
                         'relatable_id' => $product_id,
                         'type' => 'product',
-                        'path' => $fullPath,
+                        'path' => $path,
                     ]);
                 }
             }
-
 
             // Return success response
             return response()->json([
