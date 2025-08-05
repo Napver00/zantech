@@ -266,7 +266,6 @@ class ExpenseController extends Controller
 
                     // Create the relative path to store in the database
                     $relativePath = 'expense/' . $filename;
-                    $filePaths[] = $relativePath; // Add path to the array for the response
 
                     // Create a File record for each uploaded file
                     File::create([
