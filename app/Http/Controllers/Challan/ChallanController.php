@@ -105,7 +105,9 @@ class ChallanController extends Controller
             // Save the invoice image
             if ($request->hasFile('invoice')) {
                 $invoice = $request->file('invoice');
-                $path = $invoice->store('public/challan');
+
+                // Save to 'storage/app/public/challan'
+                $path = $invoice->store('challan', 'public');
 
                 File::create([
                     'relatable_id' => $challan->id,
@@ -113,6 +115,7 @@ class ChallanController extends Controller
                     'path' => $path,
                 ]);
             }
+
 
             return response()->json([
                 'success' => true,
@@ -154,7 +157,7 @@ class ChallanController extends Controller
             $response = [
                 'id' => $challan->id,
                 'Date' => $challan->Date,
-                'totalproductprice'=>$challan->total - $challan->delivery_price,
+                'totalproductprice' => $challan->total - $challan->delivery_price,
                 'delivery_price' => $challan->delivery_price,
                 'total' => $challan->total,
                 'supplier' => $challan->supplier ? [
@@ -177,7 +180,8 @@ class ChallanController extends Controller
                 'invoices' => $challan->invoices->map(function ($file) {
                     return [
                         'id' => $file->id,
-                        'path' => asset('storage/' . str_replace('public/', '', $file->path)),
+                        'path' => url('public/' . $file->path),
+
                     ];
                 }),
             ];
@@ -254,7 +258,7 @@ class ChallanController extends Controller
                     return [
                         'id' => $challan->id,
                         'Date' => $challan->Date,
-                        'totalproductprice'=>$challan->total - $challan->delivery_price,
+                        'totalproductprice' => $challan->total - $challan->delivery_price,
                         'delivery_price' => $challan->delivery_price,
                         'total' => $challan->total,
                         'supplier' => $challan->supplier ? [
@@ -659,11 +663,11 @@ class ChallanController extends Controller
                 ], 422);
             }
 
-            // Store the file
+            // Store the file in 'storage/app/public/challan'
             $invoice = $request->file('invoice');
-            $path = $invoice->store('public/challan');
+            $path = $invoice->store('challan', 'public');
 
-            // Save file record
+            // Save file record in DB
             $file = File::create([
                 'relatable_id' => $challan->id,
                 'type' => 'challan',
@@ -674,7 +678,10 @@ class ChallanController extends Controller
                 'success' => true,
                 'status' => 200,
                 'message' => 'Invoice image uploaded successfully.',
-                'data' => $file,
+                'data' => [
+                    'id' => $file->id,
+                    'path' => url('public/' . $file->path),
+                ],
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
@@ -687,6 +694,7 @@ class ChallanController extends Controller
             ], 500);
         }
     }
+
 
     // delete invoice image
     public function destroyInvoice($id)
