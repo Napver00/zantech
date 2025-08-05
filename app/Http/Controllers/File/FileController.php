@@ -178,12 +178,13 @@ class FileController extends Controller
                 ], 404);
             }
 
-            // Delete the image file from storage
-            if (Storage::exists($image->path)) {
-                Storage::delete($image->path);
+            // Delete the physical file from public directory
+            $fullPath = public_path($image->path);
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
             }
 
-            // Delete the image record from the files table
+            // Delete the image record from the database
             $image->delete();
 
             // Return success response

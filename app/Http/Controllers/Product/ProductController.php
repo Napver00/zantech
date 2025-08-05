@@ -519,10 +519,16 @@ class ProductController extends Controller
 
             // Delete image files from storage
             foreach ($images as $image) {
-                if (Storage::exists($image->path)) {
-                    Storage::delete($image->path);
+                // Delete the physical file from public directory
+                $fullPath = public_path($image->path);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
                 }
+                // Delete the image record from the database
+                $image->delete();
             }
+
+
 
             // Delete related records from Cetagory_Product_list, Tag, and File tables
             Cetagory_Product_list::where('item_id', $product_id)->delete();
