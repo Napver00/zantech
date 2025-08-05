@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Contact\ContactController;
 use App\Http\Controllers\Ambassador\AmbassadorController;
 use App\Http\Controllers\Company\CompanyController;
+use App\Http\Controllers\Project\ProjectController;
 // Public Api
 
 // Contact Us
@@ -28,4 +29,8 @@ Route::prefix('company')->group(function () {
     Route::put('/{id}', [CompanyController::class, 'update']);
 });
 
-
+// project
+Route::get('/projects', [ProjectController::class, 'index']);
+Route::post('/projects', [ProjectController::class, 'store']);
+Route::put('/projects/{id}', [ProjectController::class, 'update']);
+Route::delete('/projects/{id}', [ProjectController::class, 'destroy']);
