@@ -103,16 +103,31 @@ class ProductController extends Controller
             }
 
             // Save images
-            if ($request->has('images')) {
-                foreach ($request->file('images') as $image) {
-                    // Store the image in the storage folder
-                    $path = $image->store('public/product_image');
+            // if ($request->has('images')) {
+            //     foreach ($request->file('images') as $image) {
+            //         // Store the image in the storage folder
+            //         $path = $image->store('public/product_image');
 
-                    // Save the image path in the File table
+            //         // Save the image path in the File table
+            //         File::create([
+            //             'relatable_id' => $product->id,
+            //             'type' => 'product',
+            //             'path' => $path,
+            //         ]);
+            //     }
+            // }
+
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $filename = time() . '_' . $image->getClientOriginalName();
+                    $path = $image->move(public_path('product_image'), $filename);
+
+                    $fullPath = env('APP_URL') . '/product_image/' . $filename;
+
                     File::create([
                         'relatable_id' => $product->id,
                         'type' => 'product',
-                        'path' => $path,
+                        'path' => $fullPath,
                     ]);
                 }
             }
