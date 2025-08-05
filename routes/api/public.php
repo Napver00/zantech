@@ -28,10 +28,4 @@ Route::prefix('company')->group(function () {
     Route::put('/{id}', [CompanyController::class, 'update']);
 });
 
-// Social Links for Company
-Route::prefix('social-links')->group(function () {
-    Route::post('/', [CompanyController::class, 'store']);
-    Route::get('/company/{company_id}', [CompanyController::class, 'index']);
-    Route::put('/{id}', [CompanyController::class, 'updatesocial']);
-    Route::delete('/{id}', [CompanyController::class, 'destroy']);
-});
+
