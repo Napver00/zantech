@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Technology extends Model
 {
     use HasFactory;
-    protected $fillable = ['name'];
+    protected $fillable = ['name', '	project_id'];
 
-    public function projects()
+    public function project()
     {
-        return $this->belongsToMany(Project::class, 'project_technology');
+        return $this->belongsTo(Project::class);
     }
 }

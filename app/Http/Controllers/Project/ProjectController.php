@@ -10,24 +10,18 @@ use Illuminate\Support\Facades\Validator;
 
 class ProjectController extends Controller
 {
-    //
     // CREATE PROJECT
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'company_id' => 'required|exists:companies,id',
+        $request->validate([
             'title' => 'required|string',
             'description' => 'nullable|string',
-            'status' => 'nullable|boolean',
-            'technologies' => 'array',
-            'technologies.*' => 'string',
-            'image' => 'nullable|image'
+            'status' => 'required|boolean',
+            'image' => 'nullable|image',
+            'technologies' => 'required|array'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'status' => 422, 'errors' => $validator->errors()], 422);
-        }
-
+        // Save image
         $imagePath = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -36,22 +30,22 @@ class ProjectController extends Controller
             $imagePath = 'project/' . $filename;
         }
 
+        // Create project
         $project = Project::create([
-            'company_id' => $request->company_id,
             'title' => $request->title,
             'description' => $request->description,
+            'status' => $request->status,
             'image' => $imagePath,
-            'status' => $request->status ?? 1,
+            'company_id' => 1 
         ]);
 
-        // Create or attach technologies
-        $techIds = [];
+        // Add technologies
         foreach ($request->technologies as $techName) {
-            $tech = Technology::firstOrCreate(['name' => $techName]);
-            $techIds[] = $tech->id;
+            Technology::create([
+                'name' => $techName,
+                'project_id' => $project->id
+            ]);
         }
-
-        $project->technologies()->sync($techIds);
 
         return response()->json([
             'success' => true,
@@ -61,18 +55,20 @@ class ProjectController extends Controller
         ]);
     }
 
-    // SHOW ALL PROJECTS
+    // GET ALL PROJECTS
     public function index()
     {
-        $projects = Project::with('technologies')->get()->map(function ($p) {
-            $p->image = $p->image ? url('public/' . $p->image) : null;
-            return $p;
-        });
+        $projects = Project::with('technologies')->get();
+
+        // Attach full image URL
+        foreach ($projects as $app) {
+            $app->image_url = $app->image ? url('public/' . $app->image) : null;
+        }
 
         return response()->json([
             'success' => true,
             'status' => 200,
-            'message' => 'All projects fetched.',
+            'message' => 'Project list fetched.',
             'data' => $projects
         ]);
     }
@@ -82,41 +78,34 @@ class ProjectController extends Controller
     {
         $project = Project::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
-            'title' => 'nullable|string',
-            'description' => 'nullable|string',
-            'status' => 'nullable|boolean',
-            'technologies' => 'array',
-            'technologies.*' => 'string',
-            'image' => 'nullable|image'
-        ]);
+        $project->title = $request->title ?? $project->title;
+        $project->description = $request->description ?? $project->description;
+        $project->status = $request->status ?? $project->status;
 
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'status' => 422, 'errors' => $validator->errors()], 422);
-        }
-
+        // Handle image update
         if ($request->hasFile('image')) {
-            // Delete old image
             if ($project->image && file_exists(public_path($project->image))) {
                 unlink(public_path($project->image));
             }
 
-            // Save new image
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
             $image->move(public_path('project'), $filename);
             $project->image = 'project/' . $filename;
         }
 
-        $project->update($request->only(['title', 'description', 'status']));
+        $project->save();
 
+        // Update technologies (optional: delete old first)
         if ($request->has('technologies')) {
-            $techIds = [];
+            Technology::where('project_id', $project->id)->delete();
+
             foreach ($request->technologies as $techName) {
-                $tech = Technology::firstOrCreate(['name' => $techName]);
-                $techIds[] = $tech->id;
+                Technology::create([
+                    'name' => $techName,
+                    'project_id' => $project->id
+                ]);
             }
-            $project->technologies()->sync($techIds);
         }
 
         return response()->json([
@@ -132,18 +121,22 @@ class ProjectController extends Controller
     {
         $project = Project::findOrFail($id);
 
-        // Delete image if exists
-        if ($project->image && file_exists(public_path($project->image))) {
-            unlink(public_path($project->image));
+        if ($project->image) {
+            $fullPath = public_path($project->image);
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
         }
 
-        $project->technologies()->detach();
+        // Delete related tech
+        Technology::where('project_id', $project->id)->delete();
+
         $project->delete();
 
         return response()->json([
             'success' => true,
             'status' => 200,
-            'message' => 'Application and image deleted successfully.',
+            'message' => 'Project and image deleted successfully.',
             'data' => null
         ]);
     }

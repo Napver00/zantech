@@ -17,13 +17,8 @@ class Project extends Model
         'status'
     ];
 
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
-    }
-
     public function technologies()
     {
-        return $this->belongsToMany(Technology::class, 'project_technology');
+        return $this->hasMany(Technology::class);
     }
 }
