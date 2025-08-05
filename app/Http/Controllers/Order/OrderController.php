@@ -559,7 +559,7 @@ class OrderController extends Controller
                         'price' => $bundleItem->bundleItem->price,
                         'discount' => $bundleItem->bundleItem->discount,
                         'is_bundle' => $bundleItem->bundleItem->is_bundle,
-                        'image' => url('public/', '', $bundleItem->bundleItem->images->first()) ? url('public/', '', $bundleItem->bundleItem->images->first()->path): null,
+                        'image' => url('public/'. $bundleItem->bundleItem->images->first()) ? url('public/'. $bundleItem->bundleItem->images->first()->path): null,
                     ];
                 }) : null;
 
