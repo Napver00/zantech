@@ -18,31 +18,21 @@ class HeroSectionController extends Controller
                 'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
 
-            // $imagePath = $request->file('image')->store('public/herosection');
-
-            // // Save the file path in the files table
-            // $file = File::create([
-            //     'relatable_id' => 0,
-            //     'type' => 'hero',
-            //     'path' => str_replace('public/', '', $imagePath),
-            // ]);
-
             if ($request->hasFile('image')) {
-                foreach ($request->file('image') as $image) {
-                    $filename = time() . '_' . $image->getClientOriginalName();
-                    $image->move(public_path('herosection'), $filename);
+                $image = $request->file('image');
+                $filename = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('herosection'), $filename);
 
-                    // Just save the relative path in DB
-                    $relativePath = 'herosection/' . $filename;
+                // Save to database
+                $relativePath = 'herosection/' . $filename;
 
-                    File::create([
-                        'relatable_id' => 0,
-                        'type' => 'hero',
-                        'path' => $relativePath,
-                    ]);
-                }
+                File::create([
+                    'relatable_id' => 0,
+                    'type' => 'hero',
+                    'path' => $relativePath,
+                ]);
             }
-            // Return the response in the specified format
+
             return response()->json([
                 'success' => true,
                 'status' => 201,
@@ -51,7 +41,6 @@ class HeroSectionController extends Controller
                 'errors' => null,
             ], 201);
         } catch (\Exception $e) {
-            // Handle errors and return a consistent error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
