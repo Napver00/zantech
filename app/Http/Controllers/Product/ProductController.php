@@ -223,7 +223,7 @@ class ProductController extends Controller
                         'discount' => $item->discount,
                         'bundle_quantity' => $bundleItem->bundle_quantity,
                         'image' => $item->images->isNotEmpty()
-                            ? asset('storage/' . str_replace('public/', '', $item->images->first()->path))
+                            ? url('public/' . $item->images->first()->path)
                             : null,
                     ];
                 });
