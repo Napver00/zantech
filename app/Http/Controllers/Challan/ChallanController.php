@@ -715,14 +715,15 @@ class ChallanController extends Controller
                 ], 404);
             }
 
-            // Check and delete file from storage
-            $publicPath = public_path($file->path);
-            if (Storage::exists($file->path)) {
-                Storage::delete($file->path);
+            // Delete the physical file from public directory
+            $fullPath = public_path($file->path);
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
             }
 
-            // Delete the database record
+            // Delete the image record from the database
             $file->delete();
+
 
             return response()->json([
                 'success' => true,

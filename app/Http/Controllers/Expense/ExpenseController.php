@@ -364,12 +364,13 @@ class ExpenseController extends Controller
                 ], 404);
             }
 
-            // Check and delete file from storage
-            if (Storage::exists($file->path)) {
-                Storage::delete($file->path);
+            // Delete the physical file from public directory
+            $fullPath = public_path($file->path);
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
             }
 
-            // Delete the database record
+            // Delete the image record from the database
             $file->delete();
 
             return response()->json([
@@ -411,12 +412,14 @@ class ExpenseController extends Controller
 
             // Delete each file from storage and database
             foreach ($files as $file) {
-                // Delete from storage
-                if (Storage::exists($file->path)) {
-                    Storage::delete($file->path);
+
+                // Delete the physical file from public directory
+                $fullPath = public_path($file->path);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
                 }
 
-                // Delete file record
+                // Delete the image record from the database
                 $file->delete();
             }
 
