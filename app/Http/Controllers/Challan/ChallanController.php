@@ -667,15 +667,31 @@ class ChallanController extends Controller
             }
 
             // Store the file in 'storage/app/public/challan'
-            $invoice = $request->file('invoice');
-            $path = $invoice->store('challan', 'public');
+            // $invoice = $request->file('invoice');
+            // $path = $invoice->store('challan', 'public');
 
-            // Save file record in DB
-            $file = File::create([
-                'relatable_id' => $challan->id,
-                'type' => 'challan',
-                'path' => $path,
-            ]);
+            // // Save file record in DB
+            // $file = File::create([
+            //     'relatable_id' => $challan->id,
+            //     'type' => 'challan',
+            //     'path' => $path,
+            // ]);
+
+            if ($request->hasFile('invoice')) {
+                foreach ($request->file('invoice') as $image) {
+                    $filename = time() . '_' . $image->getClientOriginalName();
+                    $image->move(public_path('challan'), $filename);
+
+                    // Just save the relative path in DB
+                    $relativePath = 'challan/' . $filename;
+
+                    File::create([
+                        'relatable_id' =>  $challan->id,
+                        'type' => 'challan',
+                        'path' => $relativePath,
+                    ]);
+                }
+            }
 
 
 
@@ -683,10 +699,7 @@ class ChallanController extends Controller
                 'success' => true,
                 'status' => 200,
                 'message' => 'Invoice image uploaded successfully.',
-                'data' => [
-                    'id' => $file->id,
-                    'path' => url('public/' . $file->path),
-                ],
+                'data' => [],
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {

@@ -103,7 +103,6 @@ class ProductController extends Controller
             }
 
             // Save images
-
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
                     $filename = time() . '_' . $image->getClientOriginalName();
