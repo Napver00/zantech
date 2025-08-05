@@ -103,17 +103,20 @@ class ChallanController extends Controller
             }
 
             // Save the invoice image
-            if ($request->hasFile('invoice')) {
-                $invoice = $request->file('invoice');
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $filename = time() . '_' . $image->getClientOriginalName();
+                    $image->move(public_path('challan'), $filename);
 
-                // Save to 'storage/app/public/challan'
-                $path = $invoice->store('challan', 'public');
+                    // Just save the relative path in DB
+                    $relativePath = 'challan/' . $filename;
 
-                File::create([
-                    'relatable_id' => $challan->id,
-                    'type' => 'challan',
-                    'path' => $path,
-                ]);
+                    File::create([
+                        'relatable_id' => $challan->id,
+                        'type' => 'product',
+                        'path' => $relativePath,
+                    ]);
+                }
             }
 
 
