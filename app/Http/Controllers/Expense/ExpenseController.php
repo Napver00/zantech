@@ -47,19 +47,19 @@ class ExpenseController extends Controller
             $filePaths = [];
 
             // Handle multiple file uploads
+
             if ($request->hasFile('prove')) {
-                foreach ($request->file('prove') as $file) {
-                    $fileName = time() . '_' . $file->getClientOriginalName();
-                    $filePath = $file->storeAs('public/expense', $fileName);
+                $image = $request->file('prove');
+                $filename = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('expense'), $filename);
 
-                    File::create([
-                        'relatable_id' => $expense->id,
-                        'type' => 'expense',
-                        'path' => $filePath,
-                    ]);
+                $relativePath = 'expense/' . $filename;
 
-                    $filePaths[] = asset('storage/expense/' . $fileName);
-                }
+                File::create([
+                    'relatable_id' => $expense->id,
+                    'type' => 'expense',
+                    'path' => $relativePath,
+                ]);
             }
 
             return response()->json([
@@ -135,7 +135,7 @@ class ExpenseController extends Controller
                             return [
                                 'id' => $proveFile->id,
                                 'type' => $proveFile->type,
-                                'url' => asset('storage/expense/' . basename($proveFile->path)),
+                                'url' => url('public/' . $proveFile->path),
                             ];
                         }),
                     ];
@@ -248,15 +248,17 @@ class ExpenseController extends Controller
 
             // Upload and save multiple prove files if provided
             if ($request->hasFile('proves')) {
-                foreach ($request->file('proves') as $file) {
-                    $path = $file->store('expense', 'public');
+                $image = $request->file('prove');
+                $filename = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('expense'), $filename);
 
-                    File::create([
-                        'relatable_id' => $expense->id,
-                        'type' => 'expense',
-                        'path' => $path,
-                    ]);
-                }
+                $relativePath = 'expense/' . $filename;
+
+                File::create([
+                    'relatable_id' => $expense->id,
+                    'type' => 'expense',
+                    'path' => $relativePath,
+                ]);
 
                 $changes[] = "New prove files uploaded";
             }
@@ -314,7 +316,7 @@ class ExpenseController extends Controller
                     return [
                         'id' => $proveFile->id,
                         'type' => $proveFile->type,
-                        'url' => asset('storage/expense/' . basename($proveFile->path)),
+                        'url' => url('public/' . $proveFile->path),
                     ];
                 }),
             ];
