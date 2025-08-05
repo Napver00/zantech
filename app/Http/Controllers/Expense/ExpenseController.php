@@ -236,8 +236,6 @@ class ExpenseController extends Controller
             ], 400);
         }
 
-        // Use a database transaction for data integrity
-        DB::beginTransaction();
 
         try {
             // Update the main expense fields
@@ -289,7 +287,6 @@ class ExpenseController extends Controller
             }
 
             // Commit the transaction
-            DB::commit();
 
             return response()->json([
                 'success' => true,
