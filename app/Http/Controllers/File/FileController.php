@@ -76,19 +76,21 @@ class FileController extends Controller
                 ], 404);
             }
 
-            // If file_id is provided, use the existing image path
-            if ($request->has('file_id')) {
-                $existingFile = File::find($request->file_id);
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $filename = time() . '_' . $image->getClientOriginalName();
+                    $image->move(public_path('product_image'), $filename);
 
-                if ($existingFile) {
+                    // Just save the relative path in DB
+                    $relativePath = 'product_image/' . $filename;
+
                     File::create([
                         'relatable_id' => $product_id,
                         'type' => 'product',
-                        'path' => $existingFile->path,
+                        'path' => $relativePath,
                     ]);
                 }
             }
-
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {

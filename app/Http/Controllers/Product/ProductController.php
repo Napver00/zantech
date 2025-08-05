@@ -190,7 +190,7 @@ class ProductController extends Controller
                 'images' => $product->images->map(function ($image) {
                     return [
                         'id' => $image->id,
-                        'path' => asset('storage/' . str_replace('public/', '', $image->path)),
+                        'path' => url('public/' . $image->path),
                     ];
                 }),
             ];
