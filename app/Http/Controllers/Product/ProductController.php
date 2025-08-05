@@ -940,7 +940,7 @@ class ProductController extends Controller
 
             $formattedProducts = $products->map(function ($product) {
                 $imagePaths = $product->images->map(function ($image) {
-                    return asset('storage/' . str_replace('public/', '', $image->path));
+                    return url('public/' . $image->path);
                 })->toArray();
 
                 return [
