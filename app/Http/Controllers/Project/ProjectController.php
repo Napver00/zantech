@@ -68,6 +68,7 @@ class ProjectController extends Controller
                 'title' => 'nullable|string',
                 'description' => 'nullable|string',
                 'status' => 'nullable|string',
+                'image' => 'nullable|image',
             ]);
 
 
@@ -91,6 +92,16 @@ class ProjectController extends Controller
                     'data' => null,
                     'errors' => 'Invalid Project ID.',
                 ], 404);
+            }
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $filename = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('project'), $filename);
+                $imagePath = 'project/' . $filename;
+            }
+            if ($imagePath) {
+                $Project->image = $imagePath;
             }
             $Project->update($request->all());
 
@@ -207,39 +218,5 @@ class ProjectController extends Controller
             'status' => 200,
             'message' => 'Technology deleted successfully.'
         ]);
-    }
-
-    // Add image to project
-
-
-
-    // delete image from project
-    public function deleteImage(Project $id)
-    {
-        $project = Project::findOrFail($id);
-
-        if (!$project->image) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Project does not have an image to delete.',
-            ], 404);
-        }
-
-        $fullPath = public_path($project->image);
-        if (file_exists($fullPath)) {
-            unlink($fullPath);
-        }
-
-        // Delete the image record from the database
-        $project->image->delete();
-
-
-        $project->image = null;
-        $project->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Image deleted successfully.',
-        ], 200);
     }
 }

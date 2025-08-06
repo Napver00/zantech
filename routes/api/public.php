@@ -37,9 +37,8 @@ Route::prefix('company')->group(function () {
 Route::prefix('projects')->group(function () {
     Route::get('/', [ProjectController::class, 'index']);
     Route::post('/', [ProjectController::class, 'store']);
-    Route::put('/{id}', [ProjectController::class, 'update']);
-    Route::get('/addimage/{id}', [ProjectController::class, 'addImage']);
-    Route::delete('/deleteimage/{id}', [ProjectController::class, 'deleteImage']);
+    Route::post('/{id}', [ProjectController::class, 'update']);
+    Route::post('/updateimage/{id}', [ProjectController::class, 'addImage']);
     Route::delete('/{id}', [ProjectController::class, 'destroy']);
 
     Route::post('/technologie', [ProjectController::class, 'addTechnologies']);
