@@ -151,7 +151,7 @@ class ProjectController extends Controller
     public function getallactiveproject()
     {
         $projects = Project::with('technologies')
-            ->where('status', 'active') 
+            ->where('status', 'active')
             ->get();
 
         // Attach full image URL
@@ -210,6 +210,17 @@ class ProjectController extends Controller
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        // Optional: check project exists and load it
+        $project = Project::find($request->project_id);
+        if (!$project) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Project not found.',
+                'data' => null
+            ], 404);
         }
 
         $tech = Technology::create([
