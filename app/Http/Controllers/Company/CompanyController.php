@@ -46,7 +46,7 @@ class CompanyController extends Controller
             'success' => true,
             'status' => 200,
             'message' => 'Company updated.',
-            'data' => $company
+            'data' => $request->all()
         ]);
     }
 }
