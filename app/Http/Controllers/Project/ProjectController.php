@@ -63,47 +63,61 @@ class ProjectController extends Controller
     // update project
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'title' => 'nullable|string',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image',
-            'status' => 'nullable|string|in:active,inactive',
-        ]);
-        if ($validator->fails()) {
+        try {
+            // Validate the request data
+            $validator = Validator::make($request->all(), [
+                'title' => 'nullable|string',
+                'description' => 'nullable|string',
+                'image' => 'nullable|image',
+                'status' => 'nullable|string|in:active,inactive',
+            ]);
+
+            // If validation fails, return error response
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 422,
+                    'message' => 'Validation failed.',
+                    'data' => null,
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            // Find the project by ID
+            $project = Project::findOrFail($id);
+
+            // Check if the project exists
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'project not found.',
+                    'data' => null,
+                    'errors' => 'Invalid project ID.',
+                ], 404);
+            }
+
+            // Update the project with validated data
+            $project->update($request->all());
+
+            // Return success response
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'project updated successfully.',
+                'data' => $project,
+                'errors' => null,
+            ], 200);
+        } catch (\Exception $e) {
+            // Handle any exceptions
             return response()->json([
                 'success' => false,
-                'status' => 422,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
+                'status' => 500,
+                'message' => 'An error occurred while updating the project.',
+                'data' => null,
+                'errors' => $e->getMessage(),
+            ], 500);
         }
-        $project = Project::findOrFail($id);
-
-        // if ($request->hasFile('image')) {
-        //     // Delete old image if exists
-        //     if ($project->image) {
-        //         $fullPath = public_path($project->image);
-        //         if (file_exists($fullPath)) {
-        //             unlink($fullPath);
-        //         }
-        //     }
-
-        //     $image = $request->file('image');
-        //     $filename = time() . '_' . $image->getClientOriginalName();
-        //     $image->move(public_path('project'), $filename);
-        //     $project->image = 'project/' . $filename;
-        // }
-        $project->title = $request->input('title', $project->title);
-        $project->description = $request->input('description', $project->description);
-        $project->status = $request->input('status', $project->status);
-        $project->save();
-
-        return response()->json([
-            'success' => true,
-            'status' => 200,
-            'message' => 'Project updated successfully.',
-            'data' => $project
-        ]);
     }
 
 
