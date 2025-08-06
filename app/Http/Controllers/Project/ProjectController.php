@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\Technology;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class ProjectController extends Controller
 {
@@ -212,19 +213,27 @@ class ProjectController extends Controller
             ], 422);
         }
 
-        Technology::create([
-            'name' => $request->name,
-            'project_id' => $request->project_id
-        ]);
+        try {
+            DB::insert(
+                'INSERT INTO technologies (name, project_id, created_at, updated_at) VALUES (?, ?, NOW(), NOW())',
+                [$request->name, $request->project_id]
+            );
 
-        return response()->json([
-            'success' => true,
-            'status' => 201,
-            'message' => 'Technology added successfully.',
-            'data' => ''
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'status' => 201,
+                'message' => 'Technology added successfully.',
+                'data' => null
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Something went wrong',
+                'errors' => $e->getMessage()
+            ], 500);
+        }
     }
-
     // delete technologies from project
     public function deleteTechnologies($id)
     {
