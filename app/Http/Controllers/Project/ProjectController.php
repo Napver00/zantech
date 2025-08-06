@@ -212,17 +212,6 @@ class ProjectController extends Controller
             ], 422);
         }
 
-        // Optional: check project exists and load it
-        $project = Project::find($request->project_id);
-        if (!$project) {
-            return response()->json([
-                'success' => false,
-                'status' => 404,
-                'message' => 'Project not found.',
-                'data' => null
-            ], 404);
-        }
-
         $tech = Technology::create([
             'name' => $request->name,
             'project_id' => $request->project_id
