@@ -214,8 +214,10 @@ class ProjectController extends Controller
 
 
     // delete image from project
-    public function deleteImage(Project $project)
+    public function deleteImage(Project $id)
     {
+        $project = Project::findOrFail($id);
+
         if (!$project->image) {
             return response()->json([
                 'success' => false,
