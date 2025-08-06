@@ -23,11 +23,6 @@ class Company extends Model
         'footer_text'
     ];
 
-    public function projects()
-    {
-        return $this->hasMany(Project::class);
-    }
-
     public function socialLinks()
     {
         return $this->hasMany(SocialLink::class);

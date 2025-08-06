@@ -25,31 +25,22 @@ class CompanyController extends Controller
     // Update
     public function update(Request $request, $id)
     {
-        \Log::info('Request Data:', $request->all());
+        $request->validate([
+            'name' => 'nullable|string',
+            'hero_title' => 'nullable|string',
+            'hero_subtitle' => 'nullable|string',
+            'hero_description' => 'nullable|string',
+            'about_title' => 'nullable|string',
+            'about_description1' => 'nullable|string',
+            'about_description2' => 'nullable|string',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string',
+            'location' => 'nullable|string',
+            'footer_text' => 'nullable|string',
+        ]);
 
-        $company = Company::find($id);
-
-        if (!$company) {
-            return response()->json([
-                'success' => false,
-                'status' => 404,
-                'message' => 'Company not found'
-            ], 404);
-        }
-
-        $company->update($request->only([
-            'name',
-            'hero_title',
-            'hero_subtitle',
-            'hero_description',
-            'about_title',
-            'about_description1',
-            'about_description2',
-            'email',
-            'phone',
-            'location',
-            'footer_text'
-        ]));
+        $company = Company::findOrFail($id);
+        $company->update($request->all());
 
         return response()->json([
             'success' => true,
