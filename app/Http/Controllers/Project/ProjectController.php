@@ -151,4 +151,57 @@ class ProjectController extends Controller
             'data' => null
         ]);
     }
+
+
+    // add new technologies in project
+    public function addTechnologies(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'project_id' => 'required|exists:projects,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'status' => 422,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $tech = Technology::create([
+            'name' => $request->name,
+            'project_id' => $request->project_id
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'status' => 201,
+            'message' => 'Technology added successfully.',
+            'data' => $tech
+        ], 201);
+    }
+
+    // delete technologies from project
+    public function deleteTechnologies($id)
+    {
+        $tech = Technology::find($id);
+
+        if (!$tech) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Technology not found.'
+            ], 404);
+        }
+
+        $tech->delete();
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'Technology deleted successfully.'
+        ]);
+    }
 }

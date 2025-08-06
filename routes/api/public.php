@@ -8,9 +8,7 @@ use App\Http\Controllers\Project\ProjectController;
 // Public Api
 
 
-Route::middleware('auth:sanctum')->group(function () {
-
-});
+Route::middleware('auth:sanctum')->group(function () {});
 
 
 // Contact Us
@@ -41,4 +39,7 @@ Route::prefix('projects')->group(function () {
     Route::post('/', [ProjectController::class, 'store']);
     Route::put('/{id}', [ProjectController::class, 'update']);
     Route::delete('/{id}', [ProjectController::class, 'destroy']);
+
+    Route::post('/technologie', [ProjectController::class, 'addTechnologies']);
+    Route::delete('/technologie/{technologi_id}', [ProjectController::class, 'deleteTechnologies']);
 });
