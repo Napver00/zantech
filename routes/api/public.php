@@ -40,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}', [ProjectController::class, 'update']);
         Route::delete('/{id}', [ProjectController::class, 'destroy']);
 
-        Route::post('/technologie', [ProjectController::class, 'addTechnologies']);
+        Route::post('/technologie/{project_id}', [ProjectController::class, 'addTechnologies']);
         Route::delete('/technologie/{technologi_id}', [ProjectController::class, 'deleteTechnologies']);
     });
 });

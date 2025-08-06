@@ -197,11 +197,10 @@ class ProjectController extends Controller
 
 
     // add new technologies in project
-    public function addTechnologies(Request $request)
+    public function addTechnologies(Request $request, $project_id)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'project_id' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -213,7 +212,7 @@ class ProjectController extends Controller
             ], 422);
         }
         // Check if project exists
-        $project = Project::find($request->project_id);
+        $project = Project::find($project_id);
         if (!$project) {
             return response()->json([
                 'success' => false,
@@ -224,7 +223,7 @@ class ProjectController extends Controller
 
         Technology::create([
             'name' => $request->name,
-            'project_id' => $request->project_id
+            'project_id' => $project_id
         ]);
 
         return response()->json([
