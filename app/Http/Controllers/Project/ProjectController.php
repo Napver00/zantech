@@ -60,6 +60,34 @@ class ProjectController extends Controller
         ], 201);
     }
 
+    // update project
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'nullable|string',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image',
+            'status' => 'nullable|string|in:active,inactive',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'status' => 422,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $project = Project::findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'Project updated successfully.',
+            'data' => $project
+        ]);
+    }
+
+
     // GET ALL PROJECTS
     public function index()
     {
@@ -77,54 +105,6 @@ class ProjectController extends Controller
             'data' => $projects
         ]);
     }
-
-    // UPDATE PROJECT
-    public function update(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'title' => 'nullable|string',
-            'description' => 'nullable|string',
-            'status' => 'nullable|string',
-            // 'image' => 'nullable|image',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'status' => 422,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $project = Project::findOrFail($id);
-
-        $project->title = $request->title;
-        $project->description = $request->description;
-        $project->status = $request->status ?? $project->status;
-
-        // Handle image update
-        // if ($request->hasFile('image')) {
-        //     if ($project->image && file_exists(public_path($project->image))) {
-        //         unlink(public_path($project->image));
-        //     }
-
-        //     $image = $request->file('image');
-        //     $filename = time() . '_' . $image->getClientOriginalName();
-        //     $image->move(public_path('project'), $filename);
-        //     $project->image = 'project/' . $filename;
-        // }
-
-        $project->save();
-
-        return response()->json([
-            'success' => true,
-            'status' => 200,
-            'message' => 'Project updated successfully.',
-            'data' => $project
-        ]);
-    }
-
 
 
     // DELETE PROJECT
