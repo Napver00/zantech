@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Company;
 use App\Models\SocialLink;
+use Illuminate\Support\Facades\DB;
 
 class CompanyController extends Controller
 {
@@ -37,6 +38,7 @@ class CompanyController extends Controller
             'phone' => 'nullable|string',
             'location' => 'nullable|string',
             'footer_text' => 'nullable|string',
+
         ]);
 
         $company = Company::findOrFail($id);
@@ -46,7 +48,7 @@ class CompanyController extends Controller
             'success' => true,
             'status' => 200,
             'message' => 'Company updated.',
-            'data' => $request->all()
+            'data' => $company
         ]);
     }
 }
