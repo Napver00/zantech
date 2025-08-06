@@ -36,6 +36,7 @@ Route::prefix('company')->group(function () {
 // project
 Route::prefix('projects')->group(function () {
     Route::get('/', [ProjectController::class, 'index']);
+    Route::get('/active', [ProjectController::class, 'getallactiveproject']);
     Route::post('/', [ProjectController::class, 'store']);
     Route::post('/{id}', [ProjectController::class, 'update']);
     Route::post('/updateimage/{id}', [ProjectController::class, 'addImage']);

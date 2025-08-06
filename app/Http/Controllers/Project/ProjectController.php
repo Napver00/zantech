@@ -147,6 +147,27 @@ class ProjectController extends Controller
         ]);
     }
 
+    // get all active projects
+    public function getallactiveproject()
+    {
+        $projects = Project::with('technologies')
+            ->where('status', 'active') // only active ones
+            ->get();
+
+        // Attach full image URL
+        foreach ($projects as $app) {
+            $app->image_url = $app->image ? url('public/' . $app->image) : null;
+        }
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'Active project list fetched.',
+            'data' => $projects
+        ]);
+    }
+
+
 
     // DELETE PROJECT
     public function destroy($id)
