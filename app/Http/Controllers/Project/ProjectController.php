@@ -36,7 +36,7 @@ class ProjectController extends Controller
             'description' => $request->description,
             'status' => $request->status,
             'image' => $imagePath,
-            'company_id' => 1 
+            'company_id' => 1
         ]);
 
         // Add technologies
@@ -51,7 +51,7 @@ class ProjectController extends Controller
             'success' => true,
             'status' => 200,
             'message' => 'Project created successfully.',
-            'data' => $project->load('technologies')
+            'data' => ''
         ]);
     }
 
