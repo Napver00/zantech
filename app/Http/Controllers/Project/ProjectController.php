@@ -68,7 +68,6 @@ class ProjectController extends Controller
                 'title' => 'nullable|string',
                 'description' => 'nullable|string',
                 'status' => 'nullable|string',
-                // 'image' => 'nullable|image',
             ]);
 
 
