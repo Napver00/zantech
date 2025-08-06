@@ -213,27 +213,19 @@ class ProjectController extends Controller
             ], 422);
         }
 
-        try {
-            DB::insert(
-                'INSERT INTO technologies (name, project_id, created_at, updated_at) VALUES (?, ?, NOW(), NOW())',
-                [$request->name, $request->project_id]
-            );
+        Technology::create([
+            'name' => $request->name,
+            'project_id' => $request->project_id
+        ]);
 
-            return response()->json([
-                'success' => true,
-                'status' => 201,
-                'message' => 'Technology added successfully.',
-                'data' => null
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'status' => 500,
-                'message' => 'Something went wrong',
-                'errors' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'status' => 201,
+            'message' => 'Technology added successfully.',
+            'data' => ''
+        ], 201);
     }
+
     // delete technologies from project
     public function deleteTechnologies($id)
     {
