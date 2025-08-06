@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Contact\ContactController;
-use App\Http\Controllers\Ambassador\AmbassadorController;
+use App\Http\Controllers\Ambassador\{AmbassadorController,OurambassadorController};
 use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Project\ProjectController;
 // Public Api
@@ -24,6 +24,15 @@ Route::prefix('ambassadors')->group(function () {
     Route::get('/', [AmbassadorController::class, 'index']);
     Route::post('/', [AmbassadorController::class, 'store']);
     Route::delete('/{id}', [AmbassadorController::class, 'destroy']);
+});
+
+// ourambassadors
+Route::prefix('ourambassadors')->group(function () {
+    Route::get('ourambassadors', [OurambassadorController::class, 'index']);
+    Route::get('ourambassadors/active', [OurambassadorController::class, 'active']);
+    Route::post('ourambassadors', [OurambassadorController::class, 'store']);
+    Route::put('ourambassadors/{id}', [OurambassadorController::class, 'update']);
+    Route::delete('ourambassadors/{id}', [OurambassadorController::class, 'destroy']);
 });
 
 
