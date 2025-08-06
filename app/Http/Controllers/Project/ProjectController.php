@@ -82,8 +82,11 @@ class ProjectController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'nullable|string',
+            'title' => 'required|string',
             'description' => 'nullable|string',
+            'image' => 'nullable|image',
+            'technologies' => 'required|array',
+            'technologies.*' => 'required|string|max:255'
         ]);
 
         if ($validator->fails()) {
@@ -95,21 +98,59 @@ class ProjectController extends Controller
             ], 422);
         }
 
-        $project = Project::findOrFail($id);
+        // Find the project
+        $project = Project::find($id);
+        if (!$project) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Project not found'
+            ], 404);
+        }
 
-        $project->title = $request->title;
-        $project->description = $request->description;
+        $imagePath = $project->image; // Keep existing image path by default
 
-        $project->save();
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($project->image) {
+                $fullPath = public_path($project->image);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+            }
+
+            // Upload new image
+            $image = $request->file('image');
+            $filename = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('project'), $filename);
+            $imagePath = 'project/' . $filename;
+        }
+
+        // Update project
+        $project->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'image' => $imagePath,
+        ]);
+
+        // Update technologies - delete old ones and create new ones
+        Technology::where('project_id', $project->id)->delete();
+
+        foreach ($request->technologies as $techName) {
+            Technology::create([
+                'name' => $techName,
+                'project_id' => $project->id
+            ]);
+        }
 
         return response()->json([
             'success' => true,
             'status' => 200,
             'message' => 'Project updated successfully.',
             'data' => $project
-        ]);
+        ], 200);
     }
-
 
     // DELETE PROJECT
     public function destroy($id)
