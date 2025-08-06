@@ -79,6 +79,25 @@ class ProjectController extends Controller
         }
         $project = Project::findOrFail($id);
 
+        // if ($request->hasFile('image')) {
+        //     // Delete old image if exists
+        //     if ($project->image) {
+        //         $fullPath = public_path($project->image);
+        //         if (file_exists($fullPath)) {
+        //             unlink($fullPath);
+        //         }
+        //     }
+
+        //     $image = $request->file('image');
+        //     $filename = time() . '_' . $image->getClientOriginalName();
+        //     $image->move(public_path('project'), $filename);
+        //     $project->image = 'project/' . $filename;
+        // }
+        $project->title = $request->input('title', $project->title);
+        $project->description = $request->input('description', $project->description);
+        $project->status = $request->input('status', $project->status);
+        $project->save();
+
         return response()->json([
             'success' => true,
             'status' => 200,
