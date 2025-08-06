@@ -208,4 +208,36 @@ class ProjectController extends Controller
             'message' => 'Technology deleted successfully.'
         ]);
     }
+
+    // Add image to project
+
+
+
+    // delete image from project
+    public function deleteImage(Project $project)
+    {
+        if (!$project->image) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Project does not have an image to delete.',
+            ], 404);
+        }
+
+        $fullPath = public_path($project->image);
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
+
+        // Delete the image record from the database
+        $project->image->delete();
+
+
+        $project->image = null;
+        $project->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Image deleted successfully.',
+        ], 200);
+    }
 }
