@@ -81,13 +81,27 @@ class ProjectController extends Controller
     // UPDATE PROJECT
     public function update(Request $request, $id)
     {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'status' => 422,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         $project = Project::findOrFail($id);
 
-        $project->title = $request->title ?? $project->title;
-        $project->description = $request->description ?? $project->description;
-        $project->status = $request->status ?? $project->status;
+        $project->title = $request->title;
+        $project->description = $request->description;
 
-        // Handle image update
+        // Image update
         if ($request->hasFile('image')) {
             if ($project->image && file_exists(public_path($project->image))) {
                 unlink(public_path($project->image));
@@ -101,25 +115,14 @@ class ProjectController extends Controller
 
         $project->save();
 
-        // Update technologies (optional: delete old first)
-        if ($request->has('technologies')) {
-            Technology::where('project_id', $project->id)->delete();
-
-            foreach ($request->technologies as $techName) {
-                Technology::create([
-                    'name' => $techName,
-                    'project_id' => $project->id
-                ]);
-            }
-        }
-
         return response()->json([
             'success' => true,
             'status' => 200,
             'message' => 'Project updated successfully.',
-            'data' => $project->load('technologies')
+            'data' => $project
         ]);
     }
+
 
     // DELETE PROJECT
     public function destroy($id)
