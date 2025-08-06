@@ -212,7 +212,7 @@ class ProjectController extends Controller
             ], 422);
         }
 
-        $tech = Technology::create([
+        Technology::create([
             'name' => $request->name,
             'project_id' => $request->project_id
         ]);
@@ -221,7 +221,7 @@ class ProjectController extends Controller
             'success' => true,
             'status' => 201,
             'message' => 'Technology added successfully.',
-            'data' => $tech
+            'data' => ''
         ], 201);
     }
 
