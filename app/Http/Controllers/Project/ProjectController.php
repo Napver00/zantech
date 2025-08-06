@@ -151,7 +151,7 @@ class ProjectController extends Controller
     public function getallactiveproject()
     {
         $projects = Project::with('technologies')
-            ->where('status', 'active') // only active ones
+            ->where('status', 'active') 
             ->get();
 
         // Attach full image URL
