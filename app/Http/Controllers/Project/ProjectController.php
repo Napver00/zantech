@@ -67,61 +67,46 @@ class ProjectController extends Controller
             $validator = Validator::make($request->all(), [
                 'title' => 'nullable|string',
                 'description' => 'nullable|string',
+                'status' => 'nullable|string',
                 // 'image' => 'nullable|image',
-                'status' => 'nullable|string|in:active,inactive',
             ]);
+
+
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'status' => 422,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
+                    'message' => 'Validation failed.',
+                    'data' => null,
+                    'errors' => $validator->errors(),
                 ], 422);
             }
-            $project = Project::findOrFail($id);
 
-            if (!$project) {
+            $Project = Project::findOrFail($id);
+
+            if (!$Project) {
                 return response()->json([
                     'success' => false,
                     'status' => 404,
-                    'message' => 'project not found.',
+                    'message' => 'Project not found.',
                     'data' => null,
-                    'errors' => 'Invalid project ID.',
+                    'errors' => 'Invalid Project ID.',
                 ], 404);
             }
-
-            // if ($request->hasFile('image')) {
-            //     // Delete old image if exists
-            //     if ($project->image) {
-            //         $fullPath = public_path($project->image);
-            //         if (file_exists($fullPath)) {
-            //             unlink($fullPath);
-            //         }
-            //     }
-
-            //     $image = $request->file('image');
-            //     $filename = time() . '_' . $image->getClientOriginalName();
-            //     $image->move(public_path('project'), $filename);
-            //     $project->image = 'project/' . $filename;
-            // }
-            // Update other fields
-            $project->update($request->all());
-            // $project->title = $request->input('title', $project->title);
-            // $project->description = $request->input('description', $project->description);
-            // $project->status = $request->input('status', $project->status);
-            // $project->save();
+            $Project->update($request->all());
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'message' => 'Project updated successfully.',
-                'data' => $project
+                'message' => 'Project updated.',
+                'data' => $Project
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'status' => 500,
-                'message' => 'An error occurred while updating the project.',
+                'message' => 'An error occurred while updating the Project.',
+                'data' => null,
                 'errors' => $e->getMessage(),
             ], 500);
         }
