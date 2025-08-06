@@ -28,11 +28,11 @@ Route::prefix('ambassadors')->group(function () {
 
 // ourambassadors
 Route::prefix('ourambassadors')->group(function () {
-    Route::get('ourambassadors', [OurambassadorController::class, 'index']);
-    Route::get('ourambassadors/active', [OurambassadorController::class, 'active']);
-    Route::post('ourambassadors', [OurambassadorController::class, 'store']);
-    Route::put('ourambassadors/{id}', [OurambassadorController::class, 'update']);
-    Route::delete('ourambassadors/{id}', [OurambassadorController::class, 'destroy']);
+    Route::get('/', [OurambassadorController::class, 'index']);
+    Route::get('/active', [OurambassadorController::class, 'active']);
+    Route::post('/', [OurambassadorController::class, 'store']);
+    Route::put('/{id}', [OurambassadorController::class, 'update']);
+    Route::delete('/{id}', [OurambassadorController::class, 'destroy']);
 });
 
 
