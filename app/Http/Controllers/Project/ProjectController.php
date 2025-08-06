@@ -201,7 +201,7 @@ class ProjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'project_id' => 'required',
+            'project_id' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
