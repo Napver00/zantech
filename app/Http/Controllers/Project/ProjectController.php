@@ -17,7 +17,8 @@ class ProjectController extends Controller
             'title' => 'required|string',
             'description' => 'nullable|string',
             'image' => 'nullable|image',
-            'technologies' => 'required|array'
+            'technologies' => 'required|array',
+            'technologies.*' => 'required|string|max:255'
         ]);
 
         if ($validator->fails()) {
@@ -40,9 +41,7 @@ class ProjectController extends Controller
         $app = Project::create([
             'title'    => $request->title,
             'description'   => $request->description,
-            'company_id ' => '1',
             'image'   => $imagePath,
-            'status' => '0',
         ]);
 
         // Add technologies
