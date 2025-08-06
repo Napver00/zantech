@@ -71,7 +71,6 @@ class ProjectController extends Controller
                 'image' => 'nullable|image',
             ]);
 
-
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
@@ -93,17 +92,23 @@ class ProjectController extends Controller
                     'errors' => 'Invalid Project ID.',
                 ], 404);
             }
-            $imagePath = null;
+
+            // Handle image update
             if ($request->hasFile('image')) {
+                // Delete old image from storage if exists
+                if ($Project->image && file_exists(public_path($Project->image))) {
+                    unlink(public_path($Project->image));
+                }
+
+                // Upload new image
                 $image = $request->file('image');
                 $filename = time() . '_' . $image->getClientOriginalName();
                 $image->move(public_path('project'), $filename);
-                $imagePath = 'project/' . $filename;
+                $Project->image = 'project/' . $filename;
             }
-            if ($imagePath) {
-                $Project->image = $imagePath;
-            }
-            $Project->update($request->all());
+
+            // Update other fields
+            $Project->update($request->except('image'));
 
             return response()->json([
                 'success' => true,
@@ -121,6 +126,7 @@ class ProjectController extends Controller
             ], 500);
         }
     }
+
 
 
     // GET ALL PROJECTS
