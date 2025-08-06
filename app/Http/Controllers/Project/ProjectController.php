@@ -10,18 +10,25 @@ use Illuminate\Support\Facades\Validator;
 
 class ProjectController extends Controller
 {
-    // CREATE PROJECT
+
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string',
             'description' => 'nullable|string',
-            'status' => 'required|boolean',
             'image' => 'nullable|image',
             'technologies' => 'required|array'
         ]);
 
-        // Save image
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'status' => 422,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         $imagePath = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -30,29 +37,28 @@ class ProjectController extends Controller
             $imagePath = 'project/' . $filename;
         }
 
-        // Create project
-        $project = Project::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'status' => $request->status,
-            'image' => $imagePath,
-            'company_id' => 1
+        $app = Project::create([
+            'title'    => $request->title,
+            'description'   => $request->description,
+            'company_id ' => '1',
+            'image'   => $imagePath,
+            'status' => '0',
         ]);
 
         // Add technologies
         foreach ($request->technologies as $techName) {
             Technology::create([
                 'name' => $techName,
-                'project_id' => $project->id
+                'project_id' => $app->id
             ]);
         }
 
         return response()->json([
             'success' => true,
-            'status' => 200,
+            'status' => 201,
             'message' => 'Project created successfully.',
-            'data' => ''
-        ]);
+            'data' => $app
+        ], 201);
     }
 
     // GET ALL PROJECTS

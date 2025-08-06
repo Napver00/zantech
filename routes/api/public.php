@@ -7,6 +7,12 @@ use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Project\ProjectController;
 // Public Api
 
+
+Route::middleware('auth:sanctum')->group(function () {
+
+});
+
+
 // Contact Us
 Route::prefix('contact')->group(function () {
     Route::post('/', [ContactController::class, 'store']);
