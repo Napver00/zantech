@@ -67,7 +67,7 @@ class ProjectController extends Controller
             $validator = Validator::make($request->all(), [
                 'title' => 'nullable|string',
                 'description' => 'nullable|string',
-                'image' => 'nullable|image',
+                // 'image' => 'nullable|image',
                 'status' => 'nullable|string|in:active,inactive',
             ]);
             if ($validator->fails()) {
@@ -79,6 +79,16 @@ class ProjectController extends Controller
                 ], 422);
             }
             $project = Project::findOrFail($id);
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'project not found.',
+                    'data' => null,
+                    'errors' => 'Invalid project ID.',
+                ], 404);
+            }
 
             // if ($request->hasFile('image')) {
             //     // Delete old image if exists
@@ -95,10 +105,11 @@ class ProjectController extends Controller
             //     $project->image = 'project/' . $filename;
             // }
             // Update other fields
-            $project->title = $request->input('title', $project->title);
-            $project->description = $request->input('description', $project->description);
-            $project->status = $request->input('status', $project->status);
-            $project->save();
+            $project->update($request->all());
+            // $project->title = $request->input('title', $project->title);
+            // $project->description = $request->input('description', $project->description);
+            // $project->status = $request->input('status', $project->status);
+            // $project->save();
 
             return response()->json([
                 'success' => true,
