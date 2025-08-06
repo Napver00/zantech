@@ -212,6 +212,15 @@ class ProjectController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
+        // Check if project exists
+        $project = Project::find($request->project_id);
+        if (!$project) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Project not found.'
+            ], 404);
+        }
 
         Technology::create([
             'name' => $request->name,
