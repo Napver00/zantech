@@ -16,7 +16,6 @@ class OurambassadorController extends Controller
             'name' => 'required|string',
             'campus' => 'required|string',
             'image' => 'nullable|image',
-            'status' => 'nullable|in:0,1',
             'bio' => 'required|string',
         ]);
 

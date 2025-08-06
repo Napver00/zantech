@@ -31,7 +31,7 @@ Route::prefix('ourambassadors')->group(function () {
     Route::get('/', [OurambassadorController::class, 'index']);
     Route::get('/active', [OurambassadorController::class, 'active']);
     Route::post('/', [OurambassadorController::class, 'store']);
-    Route::put('/{id}', [OurambassadorController::class, 'update']);
+    Route::post('/{id}', [OurambassadorController::class, 'update']);
     Route::delete('/{id}', [OurambassadorController::class, 'destroy']);
 });
 
