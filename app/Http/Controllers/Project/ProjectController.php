@@ -201,7 +201,7 @@ class ProjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'project_id' => 'required|exists:projects,id',
+            'project_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -211,14 +211,6 @@ class ProjectController extends Controller
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
-        }
-        $project = Project::with('technologie')->find($request->project_id);
-        if (!$project) {
-            return response()->json([
-                'success' => false,
-                'status' => 404,
-                'message' => 'Project not found.'
-            ], 404);
         }
 
         Technology::create([
