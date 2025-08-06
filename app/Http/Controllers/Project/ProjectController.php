@@ -82,11 +82,10 @@ class ProjectController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'required|string',
+            'title' => 'nullable|string',
             'description' => 'nullable|string',
+            'status' => 'nullable|string',
             'image' => 'nullable|image',
-            'technologies' => 'required|array',
-            'technologies.*' => 'required|string|max:255'
         ]);
 
         if ($validator->fails()) {
@@ -98,59 +97,35 @@ class ProjectController extends Controller
             ], 422);
         }
 
-        // Find the project
-        $project = Project::find($id);
-        if (!$project) {
-            return response()->json([
-                'success' => false,
-                'status' => 404,
-                'message' => 'Project not found'
-            ], 404);
-        }
+        $project = Project::findOrFail($id);
 
-        $imagePath = $project->image; // Keep existing image path by default
+        $project->title = $request->title;
+        $project->description = $request->description;
+        $project->status = $request->status ?? $project->status;
 
-        // Handle image upload
+        // Handle image update
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($project->image) {
-                $fullPath = public_path($project->image);
-                if (file_exists($fullPath)) {
-                    unlink($fullPath);
-                }
+            if ($project->image && file_exists(public_path($project->image))) {
+                unlink(public_path($project->image));
             }
 
-            // Upload new image
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
             $image->move(public_path('project'), $filename);
-            $imagePath = 'project/' . $filename;
+            $project->image = 'project/' . $filename;
         }
 
-        // Update project
-        $project->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'image' => $imagePath,
-        ]);
-
-        // Update technologies - delete old ones and create new ones
-        Technology::where('project_id', $project->id)->delete();
-
-        foreach ($request->technologies as $techName) {
-            Technology::create([
-                'name' => $techName,
-                'project_id' => $project->id
-            ]);
-        }
+        $project->save();
 
         return response()->json([
             'success' => true,
             'status' => 200,
             'message' => 'Project updated successfully.',
             'data' => $project
-        ], 200);
+        ]);
     }
+
+
 
     // DELETE PROJECT
     public function destroy($id)
