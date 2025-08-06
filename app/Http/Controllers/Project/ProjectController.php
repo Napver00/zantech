@@ -85,7 +85,7 @@ class ProjectController extends Controller
             'title' => 'nullable|string',
             'description' => 'nullable|string',
             'status' => 'nullable|string',
-            'image' => 'nullable|image',
+            // 'image' => 'nullable|image',
         ]);
 
         if ($validator->fails()) {
@@ -104,16 +104,16 @@ class ProjectController extends Controller
         $project->status = $request->status ?? $project->status;
 
         // Handle image update
-        if ($request->hasFile('image')) {
-            if ($project->image && file_exists(public_path($project->image))) {
-                unlink(public_path($project->image));
-            }
+        // if ($request->hasFile('image')) {
+        //     if ($project->image && file_exists(public_path($project->image))) {
+        //         unlink(public_path($project->image));
+        //     }
 
-            $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('project'), $filename);
-            $project->image = 'project/' . $filename;
-        }
+        //     $image = $request->file('image');
+        //     $filename = time() . '_' . $image->getClientOriginalName();
+        //     $image->move(public_path('project'), $filename);
+        //     $project->image = 'project/' . $filename;
+        // }
 
         $project->save();
 
