@@ -38,7 +38,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [ProjectController::class, 'index']);
         Route::post('/', [ProjectController::class, 'store']);
         Route::post('/{id}', [ProjectController::class, 'update']);
-        Route::post('/updateimage/{id}', [ProjectController::class, 'addImage']);
         Route::delete('/{id}', [ProjectController::class, 'destroy']);
 
         Route::post('/technologie', [ProjectController::class, 'addTechnologies']);

@@ -212,6 +212,7 @@ class ProjectController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
+        Project::with('technologie')->find($request->project_id);
 
         Technology::create([
             'name' => $request->name,
