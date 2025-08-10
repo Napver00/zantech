@@ -47,7 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-// Public Routes
+// Public Routes hi
 // Contact Us
 Route::prefix('contact')->group(function () {
     Route::post('/', [ContactController::class, 'store']);
