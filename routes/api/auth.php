@@ -6,7 +6,9 @@ use App\Http\Controllers\Passwort\ForgotPasswordController;
 use App\Http\Controllers\Auth\AuthController;
 
 // Admin Auth
-Route::post('/register', [AuthController::class, 'register']);
+Route::middleware('auth:sanctum', 'role:admin')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+});
 Route::post('/login', [AuthController::class, 'login']);
 
 // User Auth
