@@ -23,10 +23,14 @@ class User extends Authenticatable
         'type',
         'phone',
         'address',
-        'role_id',
+        'role',
         'status',
         'email_verified_at'
     ];
+
+    const ROLE_ADMIN = 'admin';
+    const ROLE_STAFF = 'stuff';
+    const ROLE_MEMBER = 'member';
 
     /**
      * The attributes that should be hidden for serialization.

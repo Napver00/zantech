@@ -34,6 +34,7 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'type' => $request->type,
+                'role' => $request->type,
                 'password' => Hash::make($request->password),
             ]);
 
@@ -294,9 +295,9 @@ class AuthController extends Controller
             // Validate the request data
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
+                'email' => 'required|string|email|max:255',
                 'password' => 'required|string|min:8',
-                'phone' => 'required|string|size:11',
+                'phone' => 'required|string|size:11|unique:users',
             ]);
 
             // If validation fails, return error response
@@ -357,9 +358,9 @@ class AuthController extends Controller
     public function Userlogin(Request $request)
     {
         try {
-            // Validate the request data
+            // Validate the request data for phone login
             $validator = Validator::make($request->all(), [
-                'email' => 'required|string|email',
+                'phone' => 'required|string',
                 'password' => 'required|string',
             ]);
 
@@ -370,12 +371,12 @@ class AuthController extends Controller
                     'status' => 422,
                     'message' => 'Validation failed.',
                     'data' => null,
-                    'errors' => $validator->errors()->first(), // Return the first error message as a string
+                    'errors' => $validator->errors()->first(),
                 ], 422);
             }
 
-            // Attempt to authenticate the user
-            if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+            // Attempt to authenticate the user using phone and password
+            if (Auth::attempt(['phone' => $request->phone, 'password' => $request->password])) {
                 $user = Auth::user();
 
                 // Check if the user type is 'user'
@@ -388,17 +389,6 @@ class AuthController extends Controller
                         'errors' => 'Access denied. Only users can log in.',
                     ], 403);
                 }
-
-                // Check if the user's email is verified
-                // if (!$user->hasVerifiedEmail()) {
-                //     return response()->json([
-                //         'success' => false,
-                //         'status' => 403,
-                //         'message' => 'Email not verified. Please verify your email to log in.',
-                //         'data' => null,
-                //         'errors' => 'Email not verified.',
-                //     ], 403);
-                // }
 
                 // Generate a token for the user
                 $token = $user->createToken('auth_token')->plainTextToken;
@@ -425,28 +415,18 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'status' => 401,
-                'message' => 'Invalid email or password.',
+                'message' => 'Invalid phone number or password.', // Updated error message
                 'data' => null,
-                'errors' => 'Invalid email or password.',
+                'errors' => 'Invalid phone number or password.', // Updated error message
             ], 401);
         } catch (\Exception $e) {
-            // Extract only the main error message
-            $errorMessage = $e->getMessage();
-
-            // Check if it's a SQL Integrity Constraint Violation
-            // if (str_contains($errorMessage, 'Integrity constraint violation')) {
-            //     preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
-            //     if (!empty($matches)) {
-            //         $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
-            //     }
-            // }
             // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'An error occurred while logging in.',
                 'data' => null,
-                'errors' => $errorMessage,
+                'errors' => $e->getMessage(),
             ], 500);
         }
     }
