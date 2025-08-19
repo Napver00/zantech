@@ -154,6 +154,34 @@ class AuthController extends Controller
         ], 200);
     }
 
+    // Toggele user status
+    public function toggleStatus($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'User not found',
+                'data' => null,
+                'errors' => null,
+            ], 404);
+        }
+
+        // Flip status (if null, default to 0 first)
+        $user->status = $user->status == 1 ? 0 : 1;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'User status updated successfully.',
+            'data' => $user->status,
+            'errors' => null,
+        ], 200);
+    }
+
     /**
      * Logout user (delete token).
      */
