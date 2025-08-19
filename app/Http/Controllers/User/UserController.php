@@ -18,7 +18,8 @@ class UserController extends Controller
     //shwo user info only id, name and email
     public function index(Request $request)
     {
-        $query = User::select('id', 'name', 'email', 'phone', 'address');
+        $query = User::select('id', 'name', 'email', 'phone', 'address', 'type')
+        ->where('type', 'user');
 
         // Search by name, email, or phone
         if ($search = $request->input('search')) {
