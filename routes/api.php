@@ -23,4 +23,5 @@ require __DIR__ . '/api/shipping-addresse.php';
 require __DIR__ . '/api/supplier.php';
 require __DIR__ . '/api/transiion.php';
 require __DIR__ . '/api/wishlist.php';
+require __DIR__ . '/api/stuff.php';
 
