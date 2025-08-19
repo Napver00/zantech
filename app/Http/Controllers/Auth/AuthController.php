@@ -95,6 +95,17 @@ class AuthController extends Controller
                 ], 401);
             }
 
+            // ✅ Check status before login
+            if ($user->status == 0) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 403,
+                    'message' => 'Your access is denied. Please contact admin.',
+                    'data' => null,
+                    'errors' => 'Account inactive.',
+                ], 403);
+            }
+
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
@@ -108,16 +119,15 @@ class AuthController extends Controller
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
-            // Extract only the main error message
             $errorMessage = $e->getMessage();
 
-            // Check if it's a SQL Integrity Constraint Violation
             if (str_contains($errorMessage, 'Integrity constraint violation')) {
                 preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
                 if (!empty($matches)) {
                     $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
                 }
             }
+
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -127,6 +137,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
 
     // Delete admin stuff and mamber
     public function destroy($id)
