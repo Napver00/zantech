@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\AuthController;
 // Admin Auth
 Route::middleware('auth:sanctum', 'role:admin')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
+    Route::delete('/stuff/delete/{userid}', [AuthController::class, 'destroy']);
 });
 Route::post('/login', [AuthController::class, 'login']);
 

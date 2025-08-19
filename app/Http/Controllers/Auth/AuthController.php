@@ -128,6 +128,32 @@ class AuthController extends Controller
         }
     }
 
+    // Delete admin stuff and mamber
+    public function destroy($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'User not found',
+                'data' => null,
+                'errors' => null,
+            ], 404);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'User deleted successfully',
+            'data' => null,
+            'errors' => null,
+        ], 200);
+    }
+
     /**
      * Logout user (delete token).
      */
