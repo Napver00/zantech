@@ -17,7 +17,7 @@ class StuffController extends Controller
     //get admin stuff and  member data
     public function index(Request $request)
     {
-        $query = User::select('id', 'name', 'email', 'phone', 'address', 'type')
+        $query = User::select('id', 'name', 'email', 'phone', 'address', 'type','status')
             ->whereIn('type', ['admin', 'stuff', 'member']);
 
         // Search by name, email, or phone
