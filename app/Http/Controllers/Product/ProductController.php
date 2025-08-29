@@ -170,6 +170,7 @@ class ProductController extends Controller
             // Format the response
             $formattedProduct = [
                 'id' => $product->id,
+                'slug' => $product->slug,
                 'name' => $product->name,
                 'description' => $product->description,
                 'short_description' => $product->short_description,
@@ -298,6 +299,7 @@ class ProductController extends Controller
 
                     return [
                         'id' => $product->id,
+                        'slug' => $product->slug,
                         'name' => $product->name,
                         'short_description' => $product->short_description,
                         'status' => $product->status,
@@ -337,6 +339,7 @@ class ProductController extends Controller
 
                 return [
                     'id' => $product->id,
+                    'slug' => $product->slug,
                     'name' => $product->name,
                     'description' => $product->description,
                     'short_description' => $product->short_description,
@@ -844,6 +847,7 @@ class ProductController extends Controller
 
                     return [
                         'id' => $product->id,
+                        'slug' => $product->slug,
                         'name' => $product->name,
                         'status' => $product->status,
                         'quantity' => $product->quantity,
@@ -935,6 +939,7 @@ class ProductController extends Controller
 
                 return [
                     'id' => $product->id,
+                    'slug' => $product->slug,
                     'name' => $product->name,
                     'short_description' => $product->short_description,
                     'status' => $product->status,
