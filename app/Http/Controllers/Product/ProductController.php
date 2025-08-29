@@ -649,7 +649,7 @@ class ProductController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'description' => $product->description,
+                    'slug' => $product->slug,
                     'short_description' => $product->short_description,
                     'status' => $product->status,
                     'quantity' => $product->quantity,
