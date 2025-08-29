@@ -55,7 +55,7 @@ class ProductController extends Controller
             }
 
             // slug generate
-            $slug = Str::slug($request->name) . '-' . Carbon::now()->format('YmdHis');
+            $slug = Str::slug($request->name) . '-' . Carbon::now()->format('YmdHis') . '-zantech';
 
             $metaKeywords = $request->has('tags') ? implode(',', $request->tags) : null;
             $metaDescription = $request->description ? Str::limit(strip_tags($request->description), 255) : null;
@@ -461,7 +461,7 @@ class ProductController extends Controller
 
             // If updating name → regenerate slug + meta_title
             if ($request->has('name')) {
-                $updateData['slug'] = Str::slug($request->name) . '-' . Carbon::now()->format('YmdHis');
+                $updateData['slug'] = Str::slug($request->name) . '-' . Carbon::now()->format('YmdHis') . '-zantech';
                 $updateData['meta_title'] = $request->name;
             }
 
