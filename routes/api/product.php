@@ -11,9 +11,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // All Products Routes
     Route::prefix('products')->group(function () {
         Route::post('/', [ProductController::class, 'store']);
-        Route::get('/', [ProductController::class, 'index']);
-        Route::get('/category/{category_id}', [ProductController::class, 'shwoProductCategory']);
-        Route::get('/{product_id}', [ProductController::class, 'show']);
+
         Route::post('/toggle-status/{product_id}', [ProductController::class, 'toggleStatus']);
         Route::put('/update/{product_id}', [ProductController::class, 'updateProduct']);
         Route::delete('/delete/{product_id}', [ProductController::class, 'deleteProduct']);
@@ -31,8 +29,17 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/delete/{bundleId}', [BundleItemController::class, 'deleteBundle']);
         });
     });
-    Route::get('/except-bundles', [ProductController::class, 'showallproductsExceptBundles']);
-    Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
     Route::get('/buying-price-items', [ProductController::class, 'getitemsByBuyingPrice']);
     Route::get('/item-buying-history/{item_id}', [ProductController::class, 'getItemBuyingHistory']);
+});
+
+
+// Public Routes
+Route::prefix('products')->group(function () {
+    Route::get('/', [ProductController::class, 'index']);
+    Route::get('/{product_id}', [ProductController::class, 'show']);
+    Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
+    Route::get('/category/{category_id}', [ProductController::class, 'shwoProductCategory']);
+    Route::get('/except-bundles', [ProductController::class, 'showallproductsExceptBundles']);
+    Route::get('/is-bundles', [ProductController::class, 'showallproductsIsBundles']);
 });
