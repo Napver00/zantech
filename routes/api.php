@@ -25,3 +25,6 @@ require __DIR__ . '/api/transiion.php';
 require __DIR__ . '/api/wishlist.php';
 require __DIR__ . '/api/stuff.php';
 
+Route::get('/test', function () {
+    return response()->json(['msg' => 'API working']);
+});
