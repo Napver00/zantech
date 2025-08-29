@@ -977,7 +977,7 @@ class ProductController extends Controller
                 $query->where('type', 'product')->orderBy('id', 'asc');
             }])
                 ->where('status', '!=', 0)
-                ->where('is_bundle', 0)
+                ->where('is_bundle', 1)
                 ->orderBy('created_at', 'desc');
 
             if ($search) {
