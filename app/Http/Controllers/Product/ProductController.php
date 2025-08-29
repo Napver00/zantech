@@ -14,6 +14,7 @@ use App\Models\Cetagory_Product_list;
 use App\Models\Cetagory;
 use App\Models\Challan_item;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 
 class ProductController extends Controller
@@ -53,11 +54,15 @@ class ProductController extends Controller
                 ], 422);
             }
 
+            // slug generate
+            $slug = Str::slug($request->name) . '-' . Carbon::now()->format('YmdHis');
+
             $metaKeywords = $request->has('tags') ? implode(',', $request->tags) : null;
             $metaDescription = $request->description ? Str::limit(strip_tags($request->description), 255) : null;
             // Create the product
             $product = Item::create([
                 'name' => $request->name,
+                'slug' => $slug,
                 'description' => $request->description,
                 'short_description' => $request->short_description,
                 'status' => 1,
@@ -412,7 +417,7 @@ class ProductController extends Controller
     public function updateProduct(Request $request, $product_id)
     {
         try {
-            // Validate the request data
+            // Validate
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|string|max:255',
                 'description' => 'sometimes|string',
@@ -422,7 +427,6 @@ class ProductController extends Controller
                 'discount' => 'sometimes|numeric',
             ]);
 
-            // If validation fails, return error response
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
@@ -433,10 +437,9 @@ class ProductController extends Controller
                 ], 422);
             }
 
-            // Find the product
+            // Find product
             $product = Item::find($product_id);
 
-            // Check if the product exists
             if (!$product) {
                 return response()->json([
                     'success' => false,
@@ -447,43 +450,37 @@ class ProductController extends Controller
                 ], 404);
             }
 
-            $metaDescription = $request->description ? Str::limit(strip_tags($request->description), 255) : null;
-            if ($request->has('name')) {
-                $product->meta_title = $request->name;
-            }
-
-            if ($request->has('description')) {
-                $product->meta_description = $metaDescription;
-            }
-            // Update the product with validated data
-            $product->update($request->only([
+            $updateData = $request->only([
                 'name',
                 'description',
                 'short_description',
                 'quantity',
                 'price',
                 'discount',
-            ]));
+            ]);
 
-            // Return success response with the updated product
+            // If updating name → regenerate slug + meta_title
+            if ($request->has('name')) {
+                $updateData['slug'] = Str::slug($request->name) . '-' . Carbon::now()->format('YmdHis');
+                $updateData['meta_title'] = $request->name;
+            }
+
+            // If updating description → update meta_description
+            if ($request->has('description')) {
+                $updateData['meta_description'] = Str::limit(strip_tags($request->description), 255);
+            }
+
+            // Update product
+            $product->update($updateData);
+
             return response()->json([
                 'success' => true,
                 'status' => 200,
                 'message' => 'Product updated successfully.',
-                'data' => [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'description' => $product->description,
-                    'short_description' => $product->short_description,
-                    'status' => $product->status,
-                    'quantity' => $product->quantity,
-                    'price' => $product->price,
-                    'discount' => $product->discount,
-                ],
+                'data' => $product,
                 'errors' => null,
             ], 200);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -493,6 +490,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
 
     // Delete a product
     public function deleteProduct($product_id)
