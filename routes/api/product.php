@@ -33,13 +33,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/item-buying-history/{item_id}', [ProductController::class, 'getItemBuyingHistory']);
 });
 
-
 // Public Routes
 Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/{product_id}', [ProductController::class, 'show']);
-    Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
     Route::get('/category/{category_id}', [ProductController::class, 'shwoProductCategory']);
-    Route::get('/except-bundles', [ProductController::class, 'showallproductsExceptBundles']);
-    Route::get('/is-bundles', [ProductController::class, 'showallproductsIsBundles']);
 });
+Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
+
+Route::get('/except-bundles', [ProductController::class, 'showallproductsExceptBundles']);
+Route::get('/is-bundles', [ProductController::class, 'showallproductsIsBundles']);
+
