@@ -39,8 +39,8 @@ Route::prefix('products')->group(function () {
     Route::get('/{product_id}', [ProductController::class, 'show']);
     Route::get('/category/{category_id}', [ProductController::class, 'shwoProductCategory']);
 });
-Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
 
+Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
 Route::get('/except-bundles', [ProductController::class, 'showallproductsExceptBundles']);
 Route::get('/is-bundles', [ProductController::class, 'showallproductsIsBundles']);
 
