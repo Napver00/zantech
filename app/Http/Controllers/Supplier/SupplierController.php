@@ -81,6 +81,7 @@ class SupplierController extends Controller
                     'id'            => $supplier->id,
                     'name'          => $supplier->name,
                     'phone'         => $supplier->phone,
+                    'phone2'         => $supplier->phone2,
                     'address'       => $supplier->address,
                     'paid_amount'   => $supplier->paid_amount,
                     'total_amount'    => $itemPriceTotal,
