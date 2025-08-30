@@ -435,13 +435,12 @@ class AuthController extends Controller
     public function Userlogin(Request $request)
     {
         try {
-            // Validate the request data for phone login
+            // Validate the request data for email login
             $validator = Validator::make($request->all(), [
-                'phone' => 'required|string',
+                'email' => 'required|email',
                 'password' => 'required|string',
             ]);
 
-            // If validation fails, return error response
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
@@ -452,8 +451,8 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            // Attempt to authenticate the user using phone and password
-            if (Auth::attempt(['phone' => $request->phone, 'password' => $request->password])) {
+            // Attempt login with email + password
+            if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
                 $user = Auth::user();
 
                 // Check if the user type is 'user'
@@ -467,10 +466,20 @@ class AuthController extends Controller
                     ], 403);
                 }
 
-                // Generate a token for the user
+                // Check status
+                if ($user->status != 1) {
+                    return response()->json([
+                        'success' => false,
+                        'status' => 403,
+                        'message' => 'Your account is inactive. Contact admin.',
+                        'data' => null,
+                        'errors' => 'Account inactive.',
+                    ], 403);
+                }
+
+                // Generate token
                 $token = $user->createToken('auth_token')->plainTextToken;
 
-                // Return success response with token
                 return response()->json([
                     'success' => true,
                     'status' => 200,
@@ -488,16 +497,15 @@ class AuthController extends Controller
                 ], 200);
             }
 
-            // If authentication fails, return error response
+            // Invalid credentials
             return response()->json([
                 'success' => false,
                 'status' => 401,
-                'message' => 'Invalid phone number or password.', // Updated error message
+                'message' => 'Invalid email or password.',
                 'data' => null,
-                'errors' => 'Invalid phone number or password.', // Updated error message
+                'errors' => 'Invalid email or password.',
             ], 401);
         } catch (\Exception $e) {
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
