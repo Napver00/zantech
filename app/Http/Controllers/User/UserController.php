@@ -19,7 +19,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::select('id', 'name', 'email', 'phone', 'address', 'type')
-        ->where('type', 'user');
+            ->where('type', 'user');
 
         // Search by name, email, or phone
         if ($search = $request->input('search')) {
@@ -51,7 +51,8 @@ class UserController extends Controller
             $totalAmount = $orders->where('status', 1)->sum('total_amount');
 
             $payments = Payment::whereHas('order', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
+                $query->where('user_id', $user->id)
+                    ->where('status', 1);
             })->get();
 
             $totalDueAmount = $payments->sum(function ($payment) {
