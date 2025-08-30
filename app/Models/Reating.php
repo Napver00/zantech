@@ -12,7 +12,7 @@ class Reating extends Model
         'User_id',
         'status',
         'star',
-        'reating',
+        'rating',
         'product_id',
     ];
 

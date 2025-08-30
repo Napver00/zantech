@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('User_id');
             $table->string('status')->default(0);
             $table->string('star')->default(1);
-            $table->string('reating')->nullable();
+            $table->string('rating')->nullable();
             $table->timestamps();
         });
     }
