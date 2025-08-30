@@ -86,6 +86,7 @@ class CouponController extends Controller
                 ],
                 'type' => 'required|in:flat,percent',
                 'is_global' => 'required|boolean',
+                'min_pur'=>'nullable|integer',
                 'max_usage' => 'nullable|integer|min:1',
                 'max_usage_per_user' => 'nullable|integer|min:1',
                 'start_date' => 'nullable|date',
