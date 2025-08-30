@@ -107,18 +107,22 @@ class RatingController extends Controller
 
             // Format the response data
             $formattedRatings = $ratings->map(function ($rating) {
+                $imagePaths = $rating->product && $rating->product->images->isNotEmpty()
+                    ? $rating->product->images->map(function ($image) {
+                        return url('public/' . $image->path);
+                    })->toArray()
+                    : [];
+
                 return [
                     'id' => $rating->id,
                     'star' => $rating->star,
                     'reating' => $rating->reating,
                     'status' => $rating->status,
-                    'product' => [
+                    'product' => $rating->product ? [
                         'id' => $rating->product->id,
                         'name' => $rating->product->name,
-                        'image' => $rating->product->images->isNotEmpty()
-                            ? asset('storage/' . str_replace('public/', '', $rating->product->images->first()->path))
-                            : null,
-                    ],
+                        'images' => $imagePaths, 
+                    ] : null,
                     'user' => $rating->user ? [
                         'name' => $rating->user->name,
                         'email' => $rating->user->email,
@@ -126,7 +130,6 @@ class RatingController extends Controller
                     ] : null,
                 ];
             });
-
             // Return the JSON response
             return response()->json([
                 'success' => true,
