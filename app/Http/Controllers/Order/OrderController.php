@@ -55,9 +55,9 @@ class OrderController extends Controller
             $calculatedTotal = ($request->product_subtotal + $request->shipping_charge) - $discount;
 
             // Optional but recommended: Compare server-calculated total with client-sent total
-            if (abs($calculatedTotal - $request->total) > 0.01) { // Using a small tolerance for float comparison
-                throw new \Exception('Total amount mismatch. Please recalculate and try again.');
-            }
+            // if (abs($calculatedTotal - $request->total) > 0.01) { // Using a small tolerance for float comparison
+            //     throw new \Exception('Total amount mismatch. Please recalculate and try again.');
+            // }
 
 
             // Check product availability and update quantities
