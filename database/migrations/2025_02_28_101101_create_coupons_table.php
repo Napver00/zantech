@@ -13,8 +13,14 @@ return new class extends Migration
     {
         Schema::create('coupons', function (Blueprint $table) {
             $table->id();
-            $table->string('code');
-            $table->string('amount');
+            $table->string('code')->unique(); // coupon code
+            $table->decimal('amount', 10, 2); // discount amount (flat or %)
+            $table->enum('type', ['flat', 'percent'])->default('flat'); // flat discount or percentage
+            $table->boolean('is_global')->default(true); // true = applies to all products, false = only selected
+            $table->integer('max_usage')->nullable(); // how many times coupon can be used
+            $table->integer('max_usage_per_user')->nullable(); // limit per user
+            $table->date('start_date')->nullable(); // optional, when coupon starts
+            $table->date('end_date')->nullable();   // optional, when coupon expires
             $table->timestamps();
         });
     }

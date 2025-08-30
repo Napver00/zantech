@@ -60,4 +60,9 @@ class Item extends Model
             'item_id'
         );
     }
+
+    public function coupons()
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_item');
+    }
 }
