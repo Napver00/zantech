@@ -39,22 +39,8 @@ class CouponController extends Controller
 
             // Attach items if the coupon is not global and item_ids are provided
             if (!$validated['is_global'] && !empty($validated['item_ids'])) {
-
-                $dataToInsert = [];
-                $currentTime = now();
-
-                foreach ($validated['item_ids'] as $itemId) {
-                    $dataToInsert[] = [
-                        'coupon_id'  => $coupon->id,
-                        'item_id'    => $itemId,
-                        'created_at' => $currentTime,
-                        'updated_at' => $currentTime
-                    ];
-                }
-                
-                if (!empty($dataToInsert)) {
-                    DB::table('coupon__products')->insert($dataToInsert);
-                }
+                // This is the only part you need. It saves records to the 'coupon_item' pivot table.
+                $coupon->items()->attach($validated['item_ids']);
             }
 
             // If everything is successful, commit the transaction
