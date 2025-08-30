@@ -63,6 +63,6 @@ class Item extends Model
 
     public function coupons()
     {
-        return $this->belongsToMany(Coupon::class, 'coupon_item');
+        return $this->belongsToMany(Coupon::class, 'coupon__products');
     }
 }

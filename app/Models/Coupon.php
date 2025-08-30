@@ -28,6 +28,6 @@ class Coupon extends Model
     // Many-to-Many with Item (products)
     public function items()
     {
-        return $this->belongsToMany(Item::class, 'coupon_products');
+        return $this->belongsToMany(Item::class, 'coupon__products');
     }
 }
