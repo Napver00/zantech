@@ -27,16 +27,38 @@ use App\Jobs\SendOrderEmailsJob;
 class OrderController extends Controller
 {
     //plase order by user
+    /**
+     * Place an order
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function placeOrder(Request $request)
     {
         DB::beginTransaction();
 
         try {
-            // Validate the request
+            // Validate the basic request structure
             $validator = $this->validateOrderRequest($request);
             if ($validator->fails()) {
                 return $this->validationErrorResponse($validator);
             }
+
+            $discount = 0;
+            $couponId = $request->input('coupon_id');
+
+            // If a coupon is provided, validate it and calculate the discount
+            if ($couponId) {
+                $discount = $this->applyAndValidateCoupon($request);
+            }
+
+            //  **Crucial Security Step:** Recalculate total on the server
+            $calculatedTotal = ($request->product_subtotal + $request->shipping_charge) - $discount;
+
+            // Optional but recommended: Compare server-calculated total with client-sent total
+            if (abs($calculatedTotal - $request->total) > 0.01) { // Using a small tolerance for float comparison
+                throw new \Exception('Total amount mismatch. Please recalculate and try again.');
+            }
+
 
             // Check product availability and update quantities
             $this->updateProductQuantities($request->products);
@@ -44,14 +66,14 @@ class OrderController extends Controller
             // Generate invoice code
             $invoiceCode = $this->generateInvoiceCode();
 
-            // Create the order
-            $order = $this->createOrder($request, $invoiceCode);
+            //  Create the order with server-calculated values
+            $order = $this->createOrder($request, $invoiceCode, $discount, $calculatedTotal);
 
             // Save order items
             $this->saveOrderItems($order, $request->products);
 
             // Create payment record
-            $this->createPayment($order, $request);
+            $this->createPayment($order, $request, $calculatedTotal);
 
             DB::commit();
 
@@ -62,15 +84,148 @@ class OrderController extends Controller
             return $this->successResponse($order, 'Order placed successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->errorResponse($e->getMessage());
+            // Use a more specific status code for validation-like errors
+            $statusCode = ($e->getCode() >= 400 && $e->getCode() < 500) ? $e->getCode() : 500;
+            return $this->errorResponse($e->getMessage(), $statusCode);
         }
     }
 
+    /**
+     * Validate and apply the coupon.
+     * Throws exceptions for invalid conditions.
+     *
+     * @param Request $request
+     * @return float The calculated discount amount.
+     * @throws \Exception
+     */
+    private function applyAndValidateCoupon(Request $request): float
+    {
+        $coupon = Coupon::with('items')->find($request->coupon_id);
+
+        // Basic Checks
+        if (!$coupon) {
+            throw new \Exception('Invalid coupon provided.', 404);
+        }
+        if ($coupon->status != 0) {
+            throw new \Exception('This coupon is not active.', 400);
+        }
+
+        $now = Carbon::now();
+        if ($coupon->start_date && $now->isBefore(Carbon::parse($coupon->start_date))) {
+            throw new \Exception('This coupon is not yet valid.', 400);
+        }
+        if ($coupon->end_date && $now->isAfter(Carbon::parse($coupon->end_date))) {
+            throw new \Exception('This coupon has expired.', 400);
+        }
+
+        // Usage Limit Checks
+        $totalUsage = Order::where('coupons_id', $coupon->id)->count();
+        if ($totalUsage >= $coupon->max_usage) {
+            throw new \Exception('Coupon has reached its maximum usage limit.', 400);
+        }
+
+        if ($request->user_id) {
+            $userUsage = Order::where('coupons_id', $coupon->id)
+                ->where('user_id', $request->user_id)
+                ->count();
+            if ($userUsage >= $coupon->max_usage_per_user) {
+                throw new \Exception('You have already used this coupon the maximum number of times.', 400);
+            }
+        }
+
+        // Calculate eligible amount based on coupon type (global or product-specific)
+        $eligibleAmount = 0;
+        if ($coupon->is_global) {
+            $eligibleAmount = $request->product_subtotal;
+        } else {
+            $couponProductIds = $coupon->items->pluck('id')->toArray();
+            $cartProducts = collect($request->products);
+            $productIdsInCart = $cartProducts->pluck('product_id');
+
+            // Eager load item prices to avoid multiple queries in loop
+            $itemsInCart = Item::whereIn('id', $productIdsInCart)->get()->keyBy('id');
+
+            foreach ($cartProducts as $cartProduct) {
+                if (in_array($cartProduct['product_id'], $couponProductIds)) {
+                    $item = $itemsInCart->get($cartProduct['product_id']);
+                    if ($item) {
+                        $eligibleAmount += $item->price * $cartProduct['quantity'];
+                    }
+                }
+            }
+        }
+
+        // Minimum Purchase Check
+        if ($eligibleAmount < $coupon->min_pur) {
+            throw new \Exception("A minimum purchase of {$coupon->min_pur} on eligible items is required to use this coupon.", 400);
+        }
+
+        // Calculate Discount
+        $discount = 0;
+        if ($coupon->type === 'percent') {
+            $discount = ($eligibleAmount * $coupon->amount) / 100;
+        } elseif ($coupon->type === 'flat') {
+            $discount = $coupon->amount;
+        }
+
+        // Ensure discount is not more than the eligible amount
+        return min($discount, $eligibleAmount);
+    }
+
+    /**
+     * Create the order
+     *
+     * @param Request $request
+     * @param string $invoiceCode
+     * @param float $discount
+     * @param float $totalAmount
+     * @return Order
+     */
+    private function createOrder(Request $request, $invoiceCode, $discount, $totalAmount): Order
+    {
+        return Order::create([
+            'invoice_code' => $invoiceCode,
+            'user_id' => $request->user_id,
+            'shipping_id' => $request->shipping_id,
+            'status' => '0',
+            'item_subtotal' => $request->product_subtotal,
+            'shipping_chaege' => $request->shipping_charge, // Your original code used 'chaege'
+            'total_amount' => $totalAmount,
+            'coupons_id' => $request->coupon_id, // Store the coupon id
+            'discount' => $discount, // Store the calculated discount
+            'user_name' => $request->user_name,
+            'phone' => $request->userphone,
+            'address' => $request->address,
+        ]);
+    }
+
+    /**
+     * Create payment record
+     *
+     * @param Order $order
+     * @param Request $request
+     * @param float $totalAmount
+     */
+    private function createPayment(Order $order, Request $request, float $totalAmount)
+    {
+        $paymentStatus = $request->payment_type == 2 ? 4 : 0; // Assuming 2=Bkash(Paid), 1=COD(Unpaid)
+        Payment::create([
+            'order_id' => $order->id,
+            'status' => $paymentStatus,
+            'amount' => $totalAmount,
+            'padi_amount' => 0, // Assuming this is 'paid_amount'
+            'payment_type' => $request->payment_type,
+            'trxed' => $request->trxed,
+            'phone' => $request->paymentphone
+        ]);
+    }
+
+    // successResponse, errorResponse
     // Validate the order request
     private function validateOrderRequest(Request $request)
     {
         return Validator::make($request->all(), [
-            'coupon_id' => 'nullable|exists:coupons,id',
+            'coupon_id' => 'nullable|exists:coupons,id', // Keep this validation
             'user_id' => 'nullable|exists:users,id',
             'shipping_id' => 'nullable|exists:shipping_addresses,id',
             'shipping_charge' => 'nullable|numeric|min:0',
@@ -93,8 +248,8 @@ class OrderController extends Controller
     {
         foreach ($products as $product) {
             $item = Item::find($product['product_id']);
-            if ($item->quantity < $product['quantity']) {
-                throw new \Exception('Insufficient quantity for product: ' . $item->name);
+            if (!$item || $item->quantity < $product['quantity']) {
+                throw new \Exception('Insufficient quantity for product: ' . ($item->name ?? 'ID ' . $product['product_id']), 409);
             }
             $item->quantity -= $product['quantity'];
             $item->save();
@@ -108,117 +263,61 @@ class OrderController extends Controller
         return $lastOrder ? 'ZT' . (intval(substr($lastOrder->invoice_code, 2)) + 1) : 'ZT1000';
     }
 
-    // Create the order
-    private function createOrder(Request $request, $invoiceCode)
-    {
-        return Order::create([
-            'invoice_code' => $invoiceCode,
-            'user_id' => $request->user_id,
-            'shipping_id' => $request->shipping_id,
-            'status' => '0',
-            'item_subtotal' => $request->product_subtotal,
-            'shipping_chaege' => $request->shipping_charge,
-            'total_amount' => $request->total,
-            'coupons_id' => $request->coupon_id,
-            'discount' => $request->discount ?? 0,
-            'user_name' => $request->user_name,
-            'phone' => $request->userphone,
-            'address' => $request->address,
-        ]);
-    }
-
     // Save order items
     private function saveOrderItems($order, $products)
     {
         foreach ($products as $product) {
-            // Fetch the item details from the Item table
             $item = Item::find($product['product_id']);
 
             if (!$item) {
                 throw new \Exception('Product not found: ' . $product['product_id']);
             }
 
-            // Calculate the total price for the product
-            $Price = $item->price;
-
-            // Create the order item
-            $orderItem = Order_list::create([
+            Order_list::create([
                 'order_id' => $order->id,
                 'product_id' => $product['product_id'],
                 'Bundle_product_id' => null,
                 'quantity' => $product['quantity'],
-                'price' => $Price,
+                'price' => $item->price,
             ]);
 
             // Handle bundle products if any
-            $this->handleBundleProducts($order, $product);
+            if ($item->is_bundle) {
+                $this->handleBundleProducts($order, $product, $item);
+            }
         }
     }
 
-    // Handle bundle products
-    private function handleBundleProducts($order, $product)
+    // Handle bundle products (Slightly optimized to avoid refetching item)
+    private function handleBundleProducts($order, $productData, $item)
     {
-        // Find the item (bundle product)
-        $item = Item::find($product['product_id']);
+        // Fetch all bundle items related to the bundle product
+        $bundleItems = BundleItem::where('bundle_item_id', $item->id)->get();
 
-        if ($item->is_bundle) {
-            // Fetch all bundle items related to the bundle product
-            $bundleItems = BundleItem::where('bundle_item_id', $item->id)->get();
-
-            // Store the item_id and quantity of items in the bundle
-            $itemsInBundle = [];
-            foreach ($bundleItems as $bundleItem) {
-                $itemsInBundle[] = [
-                    'item_id' => $bundleItem->item_id,
-                    'quantity' => $bundleItem->bundle_quantity * $product['quantity'],
-                ];
-            }
-
-            // Process each item in the bundle
-            foreach ($itemsInBundle as $itemInBundle) {
-                // Fetch the item from the items table
-                $bundleProduct = Item::find($itemInBundle['item_id']);
-
-                // Reduce the quantity of the item
-                $bundleProduct->quantity -= $itemInBundle['quantity'];
+        foreach ($bundleItems as $bundleItem) {
+            $bundleProduct = Item::find($bundleItem->item_id);
+            if ($bundleProduct) {
+                $quantityToReduce = $bundleItem->bundle_quantity * $productData['quantity'];
+                if ($bundleProduct->quantity < $quantityToReduce) {
+                    throw new \Exception('Insufficient stock for bundled item: ' . $bundleProduct->name, 409);
+                }
+                $bundleProduct->quantity -= $quantityToReduce;
                 $bundleProduct->save();
             }
-
-            // Create the order item for the bundle product
-            Order_list::create([
-                'order_id' => $order->id,
-                'quantity' => $product['quantity'],
-                'price' => $item->price * $product['quantity'],
-                'product_id' => $product['product_id'],
-            ]);
         }
     }
 
-    // Create payment record
-    private function createPayment($order, $request)
-    {
-        $paymentStatus = $request->payment_type == 2 ? 4 : 0; // 1 = Paid (Bkash), 0 = Unpaid (Cash on Delivery)
-        Payment::create([
-            'order_id' => $order->id,
-            'status' => $paymentStatus,
-            'amount' => $request->total,
-            'padi_amount' => 0,
-            'payment_type' => $request->payment_type,
-            'trxed' => $request->trxed,
-            'phone' => $request->paymentphone
-        ]);;
-    }
 
     // Return validation error response
     private function validationErrorResponse($validator)
     {
         return response()->json([
             'success' => false,
-            'status' => 400,
+            'status' => 422, // 422 is more appropriate for validation errors
             'message' => 'Validation failed.',
             'data' => null,
             'errors' => $validator->errors(),
-        ], 400);
+        ], 422);
     }
 
     // Return success response
@@ -234,15 +333,15 @@ class OrderController extends Controller
     }
 
     // Return error response
-    private function errorResponse($errorMessage)
+    private function errorResponse($errorMessage, $statusCode = 500)
     {
         return response()->json([
             'success' => false,
-            'status' => 500,
+            'status' => $statusCode,
             'message' => 'Failed to place order.',
             'data' => null,
             'errors' => $errorMessage,
-        ], 500);
+        ], $statusCode);
     }
 
     // Resend order emails
@@ -559,7 +658,7 @@ class OrderController extends Controller
                         'price' => $bundleItem->bundleItem->price,
                         'discount' => $bundleItem->bundleItem->discount,
                         'is_bundle' => $bundleItem->bundleItem->is_bundle,
-                        'image' => url('public/'. $bundleItem->bundleItem->images->first()) ? url('public/'. $bundleItem->bundleItem->images->first()->path): null,
+                        'image' => url('public/' . $bundleItem->bundleItem->images->first()) ? url('public/' . $bundleItem->bundleItem->images->first()->path) : null,
                     ];
                 }) : null;
 
