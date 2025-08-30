@@ -110,12 +110,20 @@ class ProductController extends Controller
             // Save images
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-                    $filename = time() . '_' . $image->getClientOriginalName();
+                    // make product name safe for filename
+                    $cleanName = Str::slug($request->name, '_');
+                    $extension = $image->getClientOriginalExtension();
+
+                    // unique filename with timestamp
+                    $filename = $cleanName . '_' . time() . '.' . $extension;
+
+                    // move file to folder
                     $image->move(public_path('product_image'), $filename);
 
-                    // Just save the relative path in DB
+                    // relative path for DB
                     $relativePath = 'product_image/' . $filename;
 
+                    // save in DB
                     File::create([
                         'relatable_id' => $product->id,
                         'type' => 'product',
@@ -123,6 +131,7 @@ class ProductController extends Controller
                     ]);
                 }
             }
+
 
             // Return success response
             return response()->json([
