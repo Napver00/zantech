@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Coupon;
 use App\Models\Activity;
+use App\Models\Coupon_Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -32,7 +33,16 @@ class CouponController extends Controller
 
         // Attach items if not global
         if (!$validated['is_global'] && !empty($validated['item_ids'])) {
+            // save in pivot table (coupon_item)
             $coupon->items()->attach($validated['item_ids']);
+
+            // also save in Coupon_Product table
+            foreach ($validated['item_ids'] as $itemId) {
+                Coupon_Product::create([
+                    'coupon_id' => $coupon->id,
+                    'product_id' => $itemId,
+                ]);
+            }
         }
 
         return response()->json([
