@@ -121,7 +121,7 @@ class RatingController extends Controller
                     'product' => $rating->product ? [
                         'id' => $rating->product->id,
                         'name' => $rating->product->name,
-                        'images' => $imagePaths, 
+                        'thumbnail' => count($imagePaths) > 0 ? $imagePaths[0] : null,
                     ] : null,
                     'user' => $rating->user ? [
                         'name' => $rating->user->name,
@@ -130,6 +130,7 @@ class RatingController extends Controller
                     ] : null,
                 ];
             });
+
             // Return the JSON response
             return response()->json([
                 'success' => true,
