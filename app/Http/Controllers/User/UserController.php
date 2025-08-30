@@ -123,7 +123,8 @@ class UserController extends Controller
             $totalAmount = $orders->where('status', 1)->sum('total_amount');
 
             $payments = Payment::whereHas('order', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
+                $query->where('user_id', $user->id)
+                    ->where('status', 1);
             })->get();
 
             $totalDueAmount = $payments->sum(function ($payment) {
