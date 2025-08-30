@@ -121,7 +121,7 @@ class RatingController extends Controller
                     'product' => $rating->product ? [
                         'id' => $rating->product->id,
                         'name' => $rating->product->name,
-                        'thumbnail' => count($imagePaths) > 0 ? $imagePaths[0] : null,
+                        'image' => count($imagePaths) > 0 ? $imagePaths[0] : null,
                     ] : null,
                     'user' => $rating->user ? [
                         'name' => $rating->user->name,
