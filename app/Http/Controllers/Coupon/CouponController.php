@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Coupon;
 use App\Models\Activity;
 use App\Models\Coupon_Product;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use App\Models\Item;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 class CouponController extends Controller
@@ -70,74 +68,51 @@ class CouponController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            // Validate the request
-            $validator = Validator::make($request->all(), [
-                'code' => 'sometimes|string|unique:coupons,code,' . $id . '|max:255',
-                'amount' => 'sometimes|numeric|min:0',
+            $coupon = Coupon::findOrFail($id);
+
+            // Validate request
+            $validated = $request->validate([
+                'code' => [
+                    'required',
+                    'string',
+                    Rule::unique('coupons', 'code')->ignore($coupon->id),
+                ],
+                'amount' => [
+                    'required',
+                    'numeric',
+                    'min:0',
+                    Rule::when($request->input('type') === 'percent', ['max:100']),
+                ],
+                'type' => 'required|in:flat,percent',
+                'is_global' => 'required|boolean',
+                'max_usage' => 'nullable|integer|min:1',
+                'max_usage_per_user' => 'nullable|integer|min:1',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
             ]);
 
-            // If validation fails, return error response
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 400,
-                    'message' => 'Validation failed.',
-                    'data' => null,
-                    'errors' => "The code has already been taken."
-                ], 400);
-            }
+            // Update coupon
+            $coupon->update($validated);
 
-            // Find the coupon by ID
-            $coupon = Coupon::find($id);
-
-            // If the coupon doesn't exist, return a 404 response
-            if (!$coupon) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 404,
-                    'message' => 'Coupon not found.',
-                    'data' => null,
-                    'errors' => 'Coupon not found.',
-                ], 404);
-            }
-
-            // Track changes
-            $changes = [];
-            foreach ($request->all() as $key => $value) {
-                if ($coupon->$key != $value) {
-                    $changes[] = "$key changed from {$coupon->$key} to $value";
-                }
-            }
-
-            // Update the coupon
-            $coupon->update($request->all());
-
-            // Save activity if changes were made
-            if (!empty($changes)) {
-                Activity::create([
-                    'relatable_id' => $coupon->id,
-                    'type' => 'coupon',
-                    'user_id' => Auth::id(),
-                    'description' => 'Coupon updated: ' . implode(', ', $changes),
-                ]);
-            }
-
-            // Return the response in the specified format
             return response()->json([
                 'success' => true,
                 'status' => 200,
                 'message' => 'Coupon updated successfully.',
-                'data' => $coupon,
-                'errors' => null,
+                'data' => $coupon
             ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Coupon not found.',
+                'data' => null,
+            ], 404);
         } catch (\Exception $e) {
-            // Handle errors and return a consistent error response
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to update coupon.',
-                'data' => null,
-                'errors' => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -270,6 +245,79 @@ class CouponController extends Controller
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to update coupon status.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    public function addItems(Request $request, $id)
+    {
+        $request->validate([
+            'item_ids' => 'required|array',
+            'item_ids.*' => 'exists:items,id',
+        ]);
+
+        try {
+            $coupon = Coupon::findOrFail($id);
+
+            DB::beginTransaction();
+
+            foreach ($request->item_ids as $itemId) {
+                // Avoid duplicates
+                Coupon_Product::firstOrCreate([
+                    'coupon_id' => $coupon->id,
+                    'item_id' => $itemId,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Items added to coupon successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Failed to add items.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function removeItems(Request $request, $id)
+    {
+        $request->validate([
+            'item_ids' => 'required|array',
+            'item_ids.*' => 'exists:items,id',
+        ]);
+
+        try {
+            $coupon = Coupon::findOrFail($id);
+
+            DB::beginTransaction();
+
+            Coupon_Product::where('coupon_id', $coupon->id)
+                ->whereIn('item_id', $request->item_ids)
+                ->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Items removed from coupon successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Failed to remove items.',
                 'error' => $e->getMessage(),
             ], 500);
         }
