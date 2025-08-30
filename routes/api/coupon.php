@@ -10,6 +10,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('coupons')->group(function () {
         Route::post('/', [CouponController::class, 'store']);
         Route::get('/', [CouponController::class, 'index']);
+        Route::patch('/toggle-status/{coupon_id}', [CouponController::class, 'toggleStatus']);
         Route::put('/{coupon_id}', [CouponController::class, 'update']);
         Route::delete('/{coupon_id}', [CouponController::class, 'destroy']);
     });

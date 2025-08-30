@@ -238,4 +238,40 @@ class CouponController extends Controller
             ], 500);
         }
     }
+
+    // toggle status of coupons
+    public function toggleStatus($id)
+    {
+        try {
+            $coupon = Coupon::findOrFail($id);
+
+            // Toggle the status (if null, default to 0 first)
+            $coupon->status = $coupon->status == 1 ? 0 : 1;
+            $coupon->save();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Coupon status updated successfully.',
+                'data' => [
+                    'id' => $coupon->id,
+                    'status' => $coupon->status
+                ]
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Coupon not found.',
+                'data' => null,
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Failed to update coupon status.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
