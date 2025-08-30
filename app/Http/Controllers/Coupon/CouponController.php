@@ -48,8 +48,9 @@ class CouponController extends Controller
 
             return response()->json([
                 'success' => true,
+                'status' => 201,
                 'message' => 'Coupon created successfully',
-                'data' => $coupon->load('items') // Eager load the items for the response
+                'data' => null
             ], 201);
         } catch (\Exception $e) {
             // If an error occurs, roll back the transaction
@@ -58,8 +59,9 @@ class CouponController extends Controller
             // Return a proper error response for debugging
             return response()->json([
                 'success' => false,
+                'status' => 500,
                 'message' => 'Failed to create coupon.',
-                'error' => $e->getMessage() // Show the actual error in development
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -197,15 +199,13 @@ class CouponController extends Controller
             $currentPage = $request->input('page');
             $search = $request->input('search');
 
-            // Base query with related items
-            $couponsQuery = Coupon::with('items')->orderBy('created_at', 'desc');
+            // Load only id & name for items
+            $couponsQuery = Coupon::with(['items:id,name'])->orderBy('created_at', 'desc');
 
-            // Apply search filter (by code only, since no 'name' column exists)
             if ($search) {
                 $couponsQuery->where('code', 'like', '%' . $search . '%');
             }
 
-            // If pagination parameters are provided
             if ($perPage && $currentPage) {
                 $coupons = $couponsQuery->paginate($perPage, ['*'], 'page', $currentPage);
 
@@ -225,7 +225,6 @@ class CouponController extends Controller
                 ], 200);
             }
 
-            // If no pagination, return all coupons with related items
             $coupons = $couponsQuery->get();
 
             return response()->json([
