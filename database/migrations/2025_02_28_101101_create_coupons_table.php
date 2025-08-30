@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('max_usage_per_user')->nullable(); // limit per user
             $table->date('start_date')->nullable(); // optional, when coupon starts
             $table->date('end_date')->nullable();   // optional, when coupon expires
+            $table->integer('status')->default(0);
             $table->timestamps();
         });
     }

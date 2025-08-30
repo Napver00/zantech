@@ -17,6 +17,7 @@ class Coupon extends Model
         'max_usage_per_user',   // per user limit
         'start_date',
         'end_date',
+        'status,'
     ];
 
     // Relationship with Activity model
