@@ -289,11 +289,10 @@ class CouponController extends Controller
         }
     }
 
-    public function removeItems(Request $request, $id)
+    public function removeItem(Request $request, $id)
     {
         $request->validate([
-            'item_ids' => 'required|array',
-            'item_ids.*' => 'exists:items,id',
+            'item_id' => 'required|exists:items,id',
         ]);
 
         try {
@@ -302,7 +301,7 @@ class CouponController extends Controller
             DB::beginTransaction();
 
             Coupon_Product::where('coupon_id', $coupon->id)
-                ->whereIn('item_id', $request->item_ids)
+                ->where('item_id', $request->item_id)
                 ->delete();
 
             DB::commit();
@@ -310,14 +309,14 @@ class CouponController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'message' => 'Items removed from coupon successfully.',
+                'message' => 'Item removed from coupon successfully.',
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
                 'status' => 500,
-                'message' => 'Failed to remove items.',
+                'message' => 'Failed to remove item.',
                 'error' => $e->getMessage(),
             ], 500);
         }
