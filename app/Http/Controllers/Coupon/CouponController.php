@@ -26,8 +26,8 @@ class CouponController extends Controller
             'max_usage_per_user' => 'nullable|integer|min:1',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'product_ids' => 'sometimes|array', // Use 'sometimes' so it's not required
-            'product_ids.*' => 'exists:items,id',
+            'item_ids' => 'sometimes|array', // Use 'sometimes' so it's not required
+            'item_ids.*' => 'exists:items,id',
         ]);
 
         // Use a database transaction to ensure data integrity
@@ -38,9 +38,9 @@ class CouponController extends Controller
             $coupon = Coupon::create($validated);
 
             // Attach items if the coupon is not global and item_ids are provided
-            if (!$validated['is_global'] && !empty($validated['product_ids'])) {
+            if (!$validated['is_global'] && !empty($validated['item_ids'])) {
                 // This is the only part you need. It saves records to the 'coupon_item' pivot table.
-                $coupon->items()->attach($validated['product_ids']);
+                $coupon->items()->attach($validated['item_ids']);
             }
 
             // If everything is successful, commit the transaction

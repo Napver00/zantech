@@ -11,7 +11,7 @@ class Coupon_Product extends Model
 
     protected $fillable = [
         'coupon_id',
-        'product_id',
+        'item_id',
     ];
 
     public function coupon()

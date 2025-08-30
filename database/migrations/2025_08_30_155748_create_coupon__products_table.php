@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('coupon__products', function (Blueprint $table) {
             $table->id();
             $table->integer('coupon_id');
-            $table->integer('product_id');
+            $table->integer('item_id');
             $table->timestamps();
         });
     }
