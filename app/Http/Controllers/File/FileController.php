@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Item;
 use App\Models\File;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class FileController extends Controller
@@ -92,19 +93,28 @@ class FileController extends Controller
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-                    $filename = time() . '_' . $image->getClientOriginalName();
+                    // make product name safe for filename
+                    $cleanName = Str::slug($request->name, '_');
+                    $extension = $image->getClientOriginalExtension();
+
+                    // unique filename with zantech + timestamp
+                    $filename = $cleanName . '_zantech_' . time() . '.' . $extension;
+
+                    // move file to folder
                     $image->move(public_path('product_image'), $filename);
 
-                    // Just save the relative path in DB
+                    // relative path for DB
                     $relativePath = 'product_image/' . $filename;
 
+                    // save in DB
                     File::create([
-                        'relatable_id' => $product_id,
+                        'relatable_id' => $product->id,
                         'type' => 'product',
                         'path' => $relativePath,
                     ]);
                 }
             }
+
 
             // Return success response
             return response()->json([

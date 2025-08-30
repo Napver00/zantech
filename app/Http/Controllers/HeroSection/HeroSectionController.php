@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class HeroSectionController extends Controller
 {
@@ -20,7 +21,15 @@ class HeroSectionController extends Controller
 
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
-                $filename = time() . '_' . $image->getClientOriginalName();
+
+                // clean filename
+                $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension = $image->getClientOriginalExtension();
+
+                // unique filename with zantech + timestamp
+                $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+
+                // move file to folder
                 $image->move(public_path('herosection'), $filename);
 
                 // Save to database
@@ -32,6 +41,7 @@ class HeroSectionController extends Controller
                     'path' => $relativePath,
                 ]);
             }
+
 
             return response()->json([
                 'success' => true,

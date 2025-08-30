@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\Technology;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
 class ProjectController extends Controller
@@ -34,10 +35,21 @@ class ProjectController extends Controller
         $imagePath = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
+
+            // clean filename
+            $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $image->getClientOriginalExtension();
+
+            // unique filename with zantech + timestamp
+            $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+
+            // move file to folder
             $image->move(public_path('project'), $filename);
+
+            // set relative path
             $imagePath = 'project/' . $filename;
         }
+
 
         $app = Project::create([
             'title'    => $request->title,

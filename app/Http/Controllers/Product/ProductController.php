@@ -114,8 +114,8 @@ class ProductController extends Controller
                     $cleanName = Str::slug($request->name, '_');
                     $extension = $image->getClientOriginalExtension();
 
-                    // unique filename with timestamp
-                    $filename = $cleanName . '_' . time() . '.' . $extension;
+                    // unique filename with timestamp + zantech
+                    $filename = $cleanName . '_zantech_' . time() . '.' . $extension;
 
                     // move file to folder
                     $image->move(public_path('product_image'), $filename);

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Ourambassador;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+
 
 class OurambassadorController extends Controller
 {
@@ -33,10 +35,21 @@ class OurambassadorController extends Controller
         // Image upload if exists
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
+
+            // clean filename
+            $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $image->getClientOriginalExtension();
+
+            // unique filename with zantech + timestamp
+            $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+
+            // move file to folder
             $image->move(public_path('ourambassadors'), $filename);
+
+            // save relative path
             $data['image'] = 'ourambassadors/' . $filename;
         }
+
 
         $ambassador = Ourambassador::create($data);
 

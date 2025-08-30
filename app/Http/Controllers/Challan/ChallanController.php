@@ -12,6 +12,7 @@ use App\Models\Supplier_item_list;
 use App\Models\User;
 use App\Models\Expense;
 use App\Models\Challan_item;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class ChallanController extends Controller
@@ -105,7 +106,15 @@ class ChallanController extends Controller
             // Save the invoice image
             if ($request->hasFile('invoice')) {
                 $image = $request->file('invoice');
-                $filename = time() . '_' . $image->getClientOriginalName();
+
+                // clean filename
+                $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension = $image->getClientOriginalExtension();
+
+                // unique filename with zantech + timestamp
+                $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+
+                // move file to folder
                 $image->move(public_path('challan'), $filename);
 
                 $relativePath = 'challan/' . $filename;
@@ -116,6 +125,7 @@ class ChallanController extends Controller
                     'path' => $relativePath,
                 ]);
             }
+
 
 
             return response()->json([
@@ -666,11 +676,20 @@ class ChallanController extends Controller
 
             if ($request->hasFile('invoice')) {
                 $image = $request->file('invoice');
-                $filename = time() . '_' . $image->getClientOriginalName();
+
+                // get clean filename
+                $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension = $image->getClientOriginalExtension();
+
+                // create unique filename with zantech + timestamp
+                $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+
+                // move file to folder
                 $image->move(public_path('challan'), $filename);
 
                 $relativePath = 'challan/' . $filename;
 
+                // save in DB
                 File::create([
                     'relatable_id' => $challan->id,
                     'type' => 'challan',

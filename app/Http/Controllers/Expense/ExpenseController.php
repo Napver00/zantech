@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\File;
 use App\Models\Activity;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -48,10 +49,14 @@ class ExpenseController extends Controller
             if ($request->hasFile('prove')) {
                 // $request->file('prove') will be an array of files
                 foreach ($request->file('prove') as $file) {
-                    // Generate a unique filename to prevent overwrites
-                    $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                    // clean filename
+                    $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    $extension = $file->getClientOriginalExtension();
 
-                    // Move the file to the public/expense directory
+                    // unique filename with zantech + timestamp
+                    $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+
+                    // move the file to the public/expense directory
                     $file->move(public_path('expense'), $filename);
 
                     // Create the relative path to store in the database
@@ -66,6 +71,7 @@ class ExpenseController extends Controller
                     ]);
                 }
             }
+
 
             return response()->json([
                 'success' => true,
