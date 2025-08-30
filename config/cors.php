@@ -6,7 +6,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://testing.desklago.com',
+        'https://testing.desklago.com/',
         'http://localhost:5173',
         'https://storeadmin.zantechbd.com',
     ],
