@@ -146,47 +146,40 @@ class CouponController extends Controller
     public function destroy($id)
     {
         try {
-            // Find the coupon by ID
-            $coupon = Coupon::find($id);
+            // Start transaction to ensure data integrity
+            DB::beginTransaction();
 
-            // If the coupon doesn't exist, return a 404 response
-            if (!$coupon) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 404,
-                    'message' => 'Coupon not found.',
-                    'data' => null,
-                    'errors' => 'Coupon not found.',
-                ], 404);
-            }
+            $coupon = Coupon::findOrFail($id);
 
-            // Save activity before deleting
-            Activity::create([
-                'relatable_id' => $coupon->id,
-                'type' => 'coupon',
-                'user_id' => Auth::id(),
-                'description' => 'Coupon deleted: ' . $coupon->code,
-            ]);
+            // Delete related entries from pivot table manually
+            Coupon_Product::where('coupon_id', $coupon->id)->delete();
 
             // Delete the coupon
             $coupon->delete();
 
-            // Return the response in the specified format
+            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'message' => 'Coupon deleted successfully.',
+                'message' => 'Coupon and related products deleted successfully.',
                 'data' => null,
-                'errors' => null,
             ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Coupon not found.',
+                'data' => null,
+            ], 404);
         } catch (\Exception $e) {
-            // Handle errors and return a consistent error response
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Failed to delete coupon.',
-                'data' => null,
-                'errors' => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
