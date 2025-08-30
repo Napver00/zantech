@@ -10,6 +10,7 @@ use App\Models\Coupon_Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Item;
+use Illuminate\Support\Facades\DB;
 
 class CouponController extends Controller
 {
@@ -25,34 +26,43 @@ class CouponController extends Controller
             'max_usage_per_user' => 'nullable|integer|min:1',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'item_ids' => 'array',      // optional list of items
+            'item_ids' => 'sometimes|array', // Use 'sometimes' so it's not required
             'item_ids.*' => 'exists:items,id',
         ]);
 
-        // Create coupon
-        $coupon = Coupon::create($validated);
+        // Use a database transaction to ensure data integrity
+        try {
+            DB::beginTransaction();
 
-        // Attach items if not global
-        if (!$validated['is_global'] && !empty($validated['item_ids'])) {
-            // save in pivot table (coupon_item)
-            $coupon->items()->attach($validated['item_ids']);
+            // Create the coupon
+            $coupon = Coupon::create($validated);
 
-            // also save in Coupon_Product table
-            foreach ($validated['item_ids'] as $itemId) {
-                Coupon_Product::create([
-                    'coupon_id' => $coupon->id,
-                    'product_id' => $itemId,
-                ]);
+            // Attach items if the coupon is not global and item_ids are provided
+            if (!$validated['is_global'] && !empty($validated['item_ids'])) {
+                // This is the only part you need. It saves records to the 'coupon_item' pivot table.
+                $coupon->items()->attach($validated['item_ids']);
             }
+
+            // If everything is successful, commit the transaction
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Coupon created successfully',
+                'data' => $coupon->load('items') // Eager load the items for the response
+            ], 201);
+        } catch (\Exception $e) {
+            // If an error occurs, roll back the transaction
+            DB::rollBack();
+
+            // Return a proper error response for debugging
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create coupon.',
+                'error' => $e->getMessage() // Show the actual error in development
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Coupon created successfully',
-            'data' => $coupon->load('items')
-        ], 201);
     }
-
     // Method to update a coupon
     public function update(Request $request, $id)
     {
