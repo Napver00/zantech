@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('type', ['flat', 'percent'])->default('flat'); // flat discount or percentage
             $table->boolean('is_global')->default(true); // true = applies to all products, false = only selected
             $table->integer('max_usage')->nullable(); // how many times coupon can be used
+            $table->integer('min_pur')->default(0);
             $table->integer('max_usage_per_user')->nullable(); // limit per user
             $table->date('start_date')->nullable(); // optional, when coupon starts
             $table->date('end_date')->nullable();   // optional, when coupon expires
