@@ -10,100 +10,47 @@ use App\Models\Coupon_Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Item;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CouponController extends Controller
 {
-    /**
-     * Store a newly created coupon
-     */
+    // Method to store a coupon
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'code' => 'required|string|max:50|unique:coupons,code',
-                'amount' => 'required|numeric|min:0',
-                'type' => 'required|in:flat,percent',
-                'is_global' => 'required|boolean',
-                'max_usage' => 'nullable|integer|min:1',
-                'max_usage_per_user' => 'nullable|integer|min:1',
-                'start_date' => 'nullable|date|after_or_equal:today',
-                'end_date' => 'nullable|date|after_or_equal:start_date',
-                'item_ids' => 'array',
-                'item_ids.*' => 'exists:items,id',
-            ]);
+        $validated = $request->validate([
+            'code' => 'required|string|unique:coupons,code',
+            'amount' => 'required|numeric|min:0',
+            'type' => 'required|in:flat,percent',
+            'is_global' => 'required|boolean',
+            'max_usage' => 'nullable|integer|min:1',
+            'max_usage_per_user' => 'nullable|integer|min:1',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'item_ids' => 'array',      // optional list of items
+            'item_ids.*' => 'exists:items,id',
+        ]);
 
-            // Additional business logic validations
-            if ($validated['type'] === 'percent' && $validated['amount'] > 100) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Percentage discount cannot exceed 100%',
-                    'errors' => ['amount' => ['Percentage discount must be 100% or less']]
-                ], 422);
+        // Create coupon
+        $coupon = Coupon::create($validated);
+
+        // Attach items if not global
+        if (!$validated['is_global'] && !empty($validated['item_ids'])) {
+            // save in pivot table (coupon_item)
+            $coupon->items()->attach($validated['item_ids']);
+
+            // also save in Coupon_Product table
+            foreach ($validated['item_ids'] as $itemId) {
+                Coupon_Product::create([
+                    'coupon_id' => $coupon->id,
+                    'product_id' => $itemId,
+                ]);
             }
-
-            // If not global, item_ids should be provided
-            if (!$validated['is_global'] && empty($validated['item_ids'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Item selection is required for non-global coupons',
-                    'errors' => ['item_ids' => ['Please select at least one item for this coupon']]
-                ], 422);
-            }
-
-            // Use database transaction for data consistency
-            DB::beginTransaction();
-
-            // Create coupon
-            $coupon = Coupon::create($validated);
-
-            // Attach items if not global
-            if (!$validated['is_global'] && !empty($validated['item_ids'])) {
-                // Verify all items exist before attaching
-                $existingItems = Item::whereIn('id', $validated['item_ids'])->pluck('id')->toArray();
-                $missingItems = array_diff($validated['item_ids'], $existingItems);
-
-                if (!empty($missingItems)) {
-                    DB::rollBack();
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Some selected items do not exist',
-                        'errors' => ['item_ids' => ['Items with IDs ' . implode(', ', $missingItems) . ' do not exist']]
-                    ], 422);
-                }
-
-                // Use only the pivot table relationship (recommended approach)
-                $coupon->items()->attach($validated['item_ids']);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Coupon created successfully',
-                'data' => $coupon->load('items')
-            ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating coupon: ' . $e->getMessage(), [
-                'request_data' => $request->all(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create coupon. Please try again.',
-                'errors' => ['general' => ['An unexpected error occurred']]
-            ], 500);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Coupon created successfully',
+            'data' => $coupon->load('items')
+        ], 201);
     }
 
     // Method to update a coupon
