@@ -112,7 +112,7 @@ class RatingController extends Controller
                 return [
                     'id' => $rating->id,
                     'star' => $rating->star,
-                    'reating' => $rating->reating,
+                    'reating' => $rating->rating,
                     'status' => $rating->status,
                     'product' => $rating->product ? [
                         'id' => $rating->product->id,
