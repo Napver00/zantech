@@ -248,9 +248,10 @@ class OrderController extends Controller
     {
         foreach ($products as $product) {
             $item = Item::find($product['product_id']);
-            if (!$item || $item->quantity < $product['quantity']) {
-                throw new \Exception('Insufficient quantity for product: ' . ($item->name ?? 'ID ' . $product['product_id']), 409);
-            }
+            // Set condition if the product quantity is less the shwo this err
+            // if (!$item || $item->quantity < $product['quantity']) {
+            //     throw new \Exception('Insufficient quantity for product: ' . ($item->name ?? 'ID ' . $product['product_id']), 409);
+            // }
             $item->quantity -= $product['quantity'];
             $item->save();
         }
