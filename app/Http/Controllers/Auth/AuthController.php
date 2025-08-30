@@ -95,12 +95,23 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // ✅ Check status before login
-            if ($user->status == 0) {
+            // Check role exists
+            if (empty($user->role)) {
                 return response()->json([
                     'success' => false,
                     'status' => 403,
-                    'message' => 'Your access is denied. Please contact admin.',
+                    'message' => 'No role assigned. Please contact admin.',
+                    'data' => null,
+                    'errors' => 'Role missing.',
+                ], 403);
+            }
+
+            // Check status is active (1)
+            if ($user->status != 1) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 403,
+                    'message' => 'You do not have access. Please contact admin.',
                     'data' => null,
                     'errors' => 'Account inactive.',
                 ], 403);
@@ -137,6 +148,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
 
 
     // Delete admin stuff and mamber
