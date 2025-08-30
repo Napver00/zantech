@@ -72,9 +72,7 @@ class RatingController extends Controller
 
             // Build the base query with eager loading
             $query = Reating::with([
-                'product.images' => function ($q) {
-                    $q->take(1);
-                },
+                'product.images',
                 'user'
             ])->orderBy('id', 'desc');
 
@@ -107,11 +105,9 @@ class RatingController extends Controller
 
             // Format the response data
             $formattedRatings = $ratings->map(function ($rating) {
-                $imagePaths = $rating->product && $rating->product->images->isNotEmpty()
-                    ? $rating->product->images->map(function ($image) {
-                        return url('public/' . $image->path);
-                    })->toArray()
-                    : [];
+                $firstImage = $rating->product && $rating->product->images->isNotEmpty()
+                    ? url('public/' . $rating->product->images->first()->path)
+                    : null;
 
                 return [
                     'id' => $rating->id,
@@ -121,7 +117,7 @@ class RatingController extends Controller
                     'product' => $rating->product ? [
                         'id' => $rating->product->id,
                         'name' => $rating->product->name,
-                        'image' => count($imagePaths) > 0 ? $imagePaths[0] : null,
+                        'image' => $firstImage,
                     ] : null,
                     'user' => $rating->user ? [
                         'name' => $rating->user->name,
@@ -130,6 +126,7 @@ class RatingController extends Controller
                     ] : null,
                 ];
             });
+
 
             // Return the JSON response
             return response()->json([
