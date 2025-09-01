@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/{product_id}', [ProductController::class, 'show']);
+    Route::get('/slug/{slug}', [ProductController::class, 'showSingleProductBySlug']);
     Route::get('/category/{category_id}', [ProductController::class, 'shwoProductCategory']);
 });
 

@@ -250,6 +250,102 @@ class ProductController extends Controller
         }
     }
 
+    // Showing single products by slug
+    public function showSingleProductBySlug($slug)
+    {
+        try {
+            // Fetch product by slug with relations
+            $product = Item::with([
+                'categories.category',
+                'tags',
+                'images',
+                'bundleItems.item.images'
+            ])->where('slug', $slug)->first();
+
+            // Check if product exists
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Product not found.',
+                    'data' => null,
+                    'errors' => 'Invalid product slug.',
+                ], 404);
+            }
+
+            // Format the response (same as before)
+            $formattedProduct = [
+                'id' => $product->id,
+                'slug' => $product->slug,
+                'name' => $product->name,
+                'description' => $product->description,
+                'short_description' => $product->short_description,
+                'is_bundle' => $product->is_bundle,
+                'status' => $product->status,
+                'quantity' => $product->quantity,
+                'price' => $product->price,
+                'discount' => $product->discount,
+                'meta_title' => $product->meta_title,
+                'meta_keywords' => $product->meta_keywords,
+                'meta_description' => $product->meta_description,
+                'categories' => $product->categories->map(function ($category) {
+                    return [
+                        'id' => $category->category->id,
+                        'name' => $category->category->name,
+                    ];
+                }),
+                'tags' => $product->tags->map(function ($tag) {
+                    return [
+                        'id' => $tag->id,
+                        'tag' => $tag->tag,
+                        'slug' => $tag->slug,
+                    ];
+                }),
+                'images' => $product->images->map(function ($image) {
+                    return [
+                        'id' => $image->id,
+                        'path' => url('public/' . $image->path),
+                    ];
+                }),
+            ];
+
+            // Add bundle items if the product is a bundle
+            if ($product->is_bundle == 1) {
+                $formattedProduct['bundle_items'] = $product->bundleItems->map(function ($bundleItem) {
+                    $item = $bundleItem->item;
+                    return [
+                        'bundle_id' => $bundleItem->id,
+                        'item_id' => $item->id,
+                        'name' => $item->name,
+                        'price' => $item->price,
+                        'discount' => $item->discount,
+                        'bundle_quantity' => $bundleItem->bundle_quantity,
+                        'image' => $item->images->isNotEmpty()
+                            ? url('public/' . $item->images->first()->path)
+                            : null,
+                    ];
+                });
+            }
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Product retrieved successfully.',
+                'data' => $formattedProduct,
+                'errors' => null,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while retrieving the product.',
+                'data' => null,
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
     // Show the all product
     public function index(Request $request)
     {
