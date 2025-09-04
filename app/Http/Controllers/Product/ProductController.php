@@ -306,6 +306,55 @@ class ProductController extends Controller
         }
     }
 
+    // New product
+    public function newProducts(Request $request)
+    {
+        try {
+            $limit = $request->input('limit', 10); // default 10 latest products
+
+            $products = Item::with(['images' => function ($query) {
+                $query->where('type', 'product')->orderBy('id', 'asc');
+            }])
+                ->where('status', '!=', 0) // only active products
+                ->orderBy('created_at', 'desc')
+                ->take($limit)
+                ->get();
+
+            $formattedProducts = $products->map(function ($product) {
+                $imagePaths = $product->images->map(function ($image) {
+                    return url('public/' . $image->path);
+                })->toArray();
+
+                return [
+                    'id' => $product->id,
+                    'slug' => $product->slug,
+                    'name' => $product->name,
+                    'short_description' => $product->short_description,
+                    'status' => $product->status,
+                    'quantity' => $product->quantity,
+                    'price' => $product->price,
+                    'discount' => $product->discount,
+                    'image_paths' => $imagePaths,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'New products retrieved successfully.',
+                'data' => $formattedProducts,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while fetching new products.',
+                'data' => null,
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     // Showing single products by slug
     public function showSingleProductBySlug($slug)
