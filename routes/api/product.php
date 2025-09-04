@@ -6,6 +6,7 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Tag\TagController;
 use App\Http\Controllers\File\FileController;
 use App\Http\Controllers\BundleItem\BundleItemController;
+use App\Http\Controllers\Product\PublicProductController;
 
 Route::middleware('auth:sanctum')->group(function () {
     // All Products Routes
@@ -37,10 +38,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Public Routes
 Route::prefix('products')->group(function () {
-    Route::get('/', [ProductController::class, 'index']);
-    Route::get('/{product_id}', [ProductController::class, 'show']);
-    Route::get('/slug/{slug}', [ProductController::class, 'showSingleProductBySlug']);
-    Route::get('/best-selling', [ProductController::class, 'bestSellingProducts']);
-    Route::get('/new', [ProductController::class, 'newProducts']);
-    Route::get('/category/{category_id}', [ProductController::class, 'shwoProductCategory']);
+    Route::get('/', [PublicProductController::class, 'index']);
+    Route::get('/{product_id}', [PublicProductController::class, 'show']);
+    Route::get('/slug/{slug}', [PublicProductController::class, 'showSingleProductBySlug']);
+    Route::get('/best-selling', [PublicProductController::class, 'bestSellingProducts']);
+    Route::get('/new', [PublicProductController::class, 'newProducts']);
+    Route::get('/category/{category_id}', [PublicProductController::class, 'shwoProductCategory']);
 });
