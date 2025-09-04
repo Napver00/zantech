@@ -30,6 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::get('/buying-price-items', [ProductController::class, 'getitemsByBuyingPrice']);
     Route::get('/item-buying-history/{item_id}', [ProductController::class, 'getItemBuyingHistory']);
+    Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
+    Route::get('/except-bundles', [ProductController::class, 'showallproductsExceptBundles']);
+    Route::get('/is-bundles', [ProductController::class, 'showallproductsIsBundles']);
 });
 
 // Public Routes
@@ -41,8 +44,3 @@ Route::prefix('products')->group(function () {
     Route::get('/new', [ProductController::class, 'newProducts']);
     Route::get('/category/{category_id}', [ProductController::class, 'shwoProductCategory']);
 });
-
-Route::get('/in-stock-products', [ProductController::class, 'inStockProducts']);
-Route::get('/except-bundles', [ProductController::class, 'showallproductsExceptBundles']);
-Route::get('/is-bundles', [ProductController::class, 'showallproductsIsBundles']);
-
