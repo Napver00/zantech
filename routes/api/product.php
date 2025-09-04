@@ -11,7 +11,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // All Products Routes
     Route::prefix('products')->group(function () {
         Route::post('/', [ProductController::class, 'store']);
-
         Route::post('/toggle-status/{product_id}', [ProductController::class, 'toggleStatus']);
         Route::put('/update/{product_id}', [ProductController::class, 'updateProduct']);
         Route::delete('/delete/{product_id}', [ProductController::class, 'deleteProduct']);
@@ -38,6 +37,7 @@ Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/{product_id}', [ProductController::class, 'show']);
     Route::get('/slug/{slug}', [ProductController::class, 'showSingleProductBySlug']);
+    Route::get('/best-selling', [ProductController::class, 'bestSellingProducts']);
     Route::get('/category/{category_id}', [ProductController::class, 'shwoProductCategory']);
 });
 

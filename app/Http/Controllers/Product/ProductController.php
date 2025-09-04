@@ -13,7 +13,9 @@ use App\Models\BundleItem;
 use App\Models\Cetagory_Product_list;
 use App\Models\Cetagory;
 use App\Models\Challan_item;
+use App\Models\Order_list;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 
@@ -249,6 +251,61 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    // Best selling product
+    public function bestSellingProducts(Request $request)
+    {
+        try {
+            $limit = $request->input('limit', 10); // default 10 best-selling
+            $query = Order_list::select('product_id', DB::raw('SUM(quantity) as total_sold'))
+                ->groupBy('product_id')
+                ->orderByDesc('total_sold')
+                ->with(['item.images']) // load product + images
+                ->take($limit)
+                ->get();
+
+            $products = $query->map(function ($orderList) {
+                $product = $orderList->item;
+
+                if (!$product) {
+                    return null; // skip if no product found
+                }
+
+                $imagePaths = $product->images->map(function ($image) {
+                    return url('public/' . $image->path);
+                })->toArray();
+
+                return [
+                    'id' => $product->id,
+                    'slug' => $product->slug,
+                    'name' => $product->name,
+                    'short_description' => $product->short_description,
+                    'status' => $product->status,
+                    'quantity' => $product->quantity,
+                    'price' => $product->price,
+                    'discount' => $product->discount,
+                    'total_sold' => $orderList->total_sold,
+                    'image_paths' => $imagePaths,
+                ];
+            })->filter(); // remove nulls
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Best-selling products retrieved successfully.',
+                'data' => $products,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'An error occurred while fetching best-selling products.',
+                'data' => null,
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     // Showing single products by slug
     public function showSingleProductBySlug($slug)
