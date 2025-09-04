@@ -4,17 +4,10 @@ namespace App\Http\Controllers\product;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use App\Models\Item;
-use App\Models\File;
-use App\Models\Tag;
-use App\Models\BundleItem;
 use App\Models\Cetagory_Product_list;
 use App\Models\Cetagory;
-use App\Models\Challan_item;
 use App\Models\Order_list;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
