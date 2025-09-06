@@ -114,7 +114,6 @@ class PublicProductController extends Controller
                     'id' => $product->id,
                     'slug' => $product->slug,
                     'name' => $product->name,
-                    'description' => $product->description,
                     'short_description' => $product->short_description,
                     'status' => $product->status,
                     'quantity' => $product->quantity,
