@@ -12,6 +12,7 @@ class Cetagory extends Model
         'name',
         'description',
         'status',
+        'slug',
     ];
 
     // Relationship with Cetagory_Product_list

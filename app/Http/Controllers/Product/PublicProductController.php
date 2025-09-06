@@ -24,6 +24,7 @@ class PublicProductController extends Controller
             $minPrice = $request->input('min_price');
             $maxPrice = $request->input('max_price');
             $categoryId = $request->input('category_id');
+            $categorySlug = $request->input('category_slug'); 
 
             // Base query to fetch products with all related images of type 'product'
             $query = Item::with(['images' => function ($query) {
@@ -47,10 +48,15 @@ class PublicProductController extends Controller
             }
 
             // Apply category filter if category_id or category_slug is provided
-            if ($categoryId) {
-                $query->whereHas('categories', function ($categoryQuery) use ($categoryId) {
+            if ($categoryId || $categorySlug) {
+                $query->whereHas('categories', function ($categoryQuery) use ($categoryId, $categorySlug) {
                     if ($categoryId) {
                         $categoryQuery->where('category_id', $categoryId);
+                    }
+                    if ($categorySlug) {
+                        $categoryQuery->whereHas('category', function ($catQuery) use ($categorySlug) {
+                            $catQuery->where('slug', $categorySlug);
+                        });
                     }
                 });
             }
@@ -83,6 +89,7 @@ class PublicProductController extends Controller
                         return [
                             'id' => $categoryProduct->category->id,
                             'name' => $categoryProduct->category->name,
+                            'slug' => $categoryProduct->category->slug ?? null,
                         ];
                     })->toArray();
 
@@ -131,6 +138,7 @@ class PublicProductController extends Controller
                     return [
                         'id' => $categoryProduct->category->id,
                         'name' => $categoryProduct->category->name,
+                        'slug' => $categoryProduct->category->slug ?? null,
                     ];
                 })->toArray();
 
@@ -144,7 +152,7 @@ class PublicProductController extends Controller
                     'price' => $product->price,
                     'discount' => $product->discount,
                     'image_paths' => $imagePaths,
-                    'categories' => $categories, 
+                    'categories' => $categories,
                 ];
             });
 

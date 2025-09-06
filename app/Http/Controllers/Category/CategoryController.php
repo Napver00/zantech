@@ -8,6 +8,7 @@ use App\Models\Cetagory as Category;
 use App\Models\Cetagory_Product_list;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Item;
+use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -28,6 +29,7 @@ class CategoryController extends Controller
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
                 'status' => 1,
+                'slug' => Str::slug($validatedData['name']) . '_' . now()->format('YmdHis') . '_zantech',
             ]);
 
             // Return a success response
@@ -199,9 +201,10 @@ class CategoryController extends Controller
                 'description' => 'nullable|string',
             ]);
 
-            // Try updating the category
+            // Update the category
             $category->name = $request->name;
             $category->description = $request->description;
+            $category->slug = Str::slug($request->name) . '_' . now()->format('YmdHis') . '_zantech';
 
             if (!$category->save()) {
                 throw new \Exception("Failed to update category.");
