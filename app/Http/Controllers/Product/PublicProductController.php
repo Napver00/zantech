@@ -13,17 +13,17 @@ use Carbon\Carbon;
 
 class PublicProductController extends Controller
 {
-    //
     // Show the all product
     public function index(Request $request)
     {
         try {
-            // Get 'limit', 'page', 'search', 'min_price', and 'max_price' from request
+            // Get parameters from request
             $perPage = $request->input('limit');
             $currentPage = $request->input('page');
             $search = $request->input('search');
             $minPrice = $request->input('min_price');
             $maxPrice = $request->input('max_price');
+            $categoryId = $request->input('category_id');
 
             // Base query to fetch products with all related images of type 'product'
             $query = Item::with(['images' => function ($query) {
@@ -44,6 +44,15 @@ class PublicProductController extends Controller
             }
             if ($maxPrice) {
                 $query->where('price', '<=', $maxPrice);
+            }
+
+            // Apply category filter if category_id or category_slug is provided
+            if ($categoryId) {
+                $query->whereHas('categories', function ($categoryQuery) use ($categoryId) {
+                    if ($categoryId) {
+                        $categoryQuery->where('category_id', $categoryId);
+                    }
+                });
             }
 
             // If pagination parameters are provided, apply pagination
@@ -69,6 +78,13 @@ class PublicProductController extends Controller
                         return url('public/' . $image->path);
                     })->toArray();
 
+                    // Get product categories
+                    $categories = $product->categories->map(function ($categoryProduct) {
+                        return [
+                            'id' => $categoryProduct->category->id,
+                            'name' => $categoryProduct->category->name,
+                        ];
+                    })->toArray();
 
                     return [
                         'id' => $product->id,
@@ -80,6 +96,7 @@ class PublicProductController extends Controller
                         'price' => $product->price,
                         'discount' => $product->discount,
                         'image_paths' => $imagePaths,
+                        'categories' => $categories,
                     ];
                 });
 
@@ -109,6 +126,13 @@ class PublicProductController extends Controller
                     return url('public/' . $image->path);
                 })->toArray();
 
+                // Get product categories
+                $categories = $product->categories->map(function ($categoryProduct) {
+                    return [
+                        'id' => $categoryProduct->category->id,
+                        'name' => $categoryProduct->category->name,
+                    ];
+                })->toArray();
 
                 return [
                     'id' => $product->id,
@@ -120,6 +144,7 @@ class PublicProductController extends Controller
                     'price' => $product->price,
                     'discount' => $product->discount,
                     'image_paths' => $imagePaths,
+                    'categories' => $categories, 
                 ];
             });
 
