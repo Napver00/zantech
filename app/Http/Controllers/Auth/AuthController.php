@@ -435,85 +435,60 @@ class AuthController extends Controller
 
     public function Userlogin(Request $request)
     {
-        try {
-            // Validate request
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
-                'password' => 'required|string',
-            ]);
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 422,
-                    'message' => 'Validation failed.',
-                    'data' => null,
-                    'errors' => $validator->errors()->first(),
-                ], 422);
-            }
+        $user = User::where('email', $request->email)->first();
 
-            // Find user by email
-            $user = User::where('email', $request->email)->first();
-
-            if (!$user || !Hash::check($request->password, $user->password)) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 401,
-                    'message' => 'Invalid email or password.',
-                    'data' => null,
-                    'errors' => 'Invalid email or password.',
-                ], 401);
-            }
-
-            // Check user type
-            if ($user->type !== 'user') {
-                return response()->json([
-                    'success' => false,
-                    'status' => 403,
-                    'message' => 'Access denied. Only users can log in.',
-                    'data' => null,
-                    'errors' => 'Access denied. Only users can log in.',
-                ], 403);
-            }
-
-            // Check status
-            if ($user->status != 1) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 403,
-                    'message' => 'Your account is inactive. Contact admin.',
-                    'data' => null,
-                    'errors' => 'Account inactive.',
-                ], 403);
-            }
-
-            // Generate Sanctum token
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'status' => 200,
-                'message' => 'User logged in successfully.',
-                'data' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $user->phone,
-                    'type' => $user->type,
-                    'status' => $user->status,
-                    'token' => $token,
-                ],
-                'errors' => null,
-            ], 200);
-        } catch (\Exception $e) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
-                'status' => 500,
-                'message' => 'An error occurred while logging in.',
+                'status' => 401,
+                'message' => 'Invalid email or password.',
                 'data' => null,
-                'errors' => $e->getMessage(),
-            ], 500);
+                'errors' => 'Invalid email or password.',
+            ], 401);
         }
+
+        if ($user->type !== 'user') {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'Access denied. Only users can log in.',
+                'data' => null,
+                'errors' => 'Access denied.',
+            ], 403);
+        }
+
+        if ($user->status != 1) {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'Account inactive. Contact admin.',
+                'data' => null,
+                'errors' => 'Account inactive.',
+            ], 403);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'User logged in successfully.',
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'type' => $user->type,
+                'status' => $user->status,
+                'token' => $token,
+            ],
+            'errors' => null,
+        ]);
     }
 
     // Change password
