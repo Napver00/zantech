@@ -17,12 +17,7 @@ return [
         'guard' => 'web',
         'passwords' => 'users',
     ],
-
-    'api' => [
-        'driver' => 'sanctum', // or 'token' if not using Sanctum
-        'provider' => 'users',
-        // 'hash' => false, // optional
-    ],
+    
 
     /*
     |--------------------------------------------------------------------------
@@ -46,6 +41,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'api' => [
+        'driver' => 'sanctum', // or 'token' if not using Sanctum
+        'provider' => 'users',
+        // 'hash' => false, // optional
+    ],
     ],
 
     /*
