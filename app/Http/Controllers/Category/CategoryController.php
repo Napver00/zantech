@@ -29,7 +29,7 @@ class CategoryController extends Controller
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
                 'status' => 1,
-                'slug' => Str::slug($validatedData['name']) . '_' . now()->format('YmdHis') . '_zantech',
+                'slug' => Str::slug($validatedData['name']),
             ]);
 
             // Return a success response
@@ -204,7 +204,7 @@ class CategoryController extends Controller
             // Update the category
             $category->name = $request->name;
             $category->description = $request->description;
-            $category->slug = Str::slug($request->name) . '_' . now()->format('YmdHis') . '_zantech';
+            $category->slug = Str::slug($request->name);
 
             if (!$category->save()) {
                 throw new \Exception("Failed to update category.");
