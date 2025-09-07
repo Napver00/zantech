@@ -432,64 +432,21 @@ class AuthController extends Controller
     }
 
     // user login
-
     public function Userlogin(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+{
+    // Get all request data
+    $data = $request->all();
 
-        $user = User::where('email', $request->email)->first();
+    // Return request data as response
+    return response()->json([
+        'success' => true,
+        'status' => 200,
+        'message' => 'Request data received.',
+        'data' => $data,
+        'errors' => null,
+    ]);
+}
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'status' => 401,
-                'message' => 'Invalid email or password.',
-                'data' => null,
-                'errors' => 'Invalid email or password.',
-            ], 401);
-        }
-
-        if ($user->type !== 'user') {
-            return response()->json([
-                'success' => false,
-                'status' => 403,
-                'message' => 'Access denied. Only users can log in.',
-                'data' => null,
-                'errors' => 'Access denied.',
-            ], 403);
-        }
-
-        if ($user->status != 1) {
-            return response()->json([
-                'success' => false,
-                'status' => 403,
-                'message' => 'Account inactive. Contact admin.',
-                'data' => null,
-                'errors' => 'Account inactive.',
-            ], 403);
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'status' => 200,
-            'message' => 'User logged in successfully.',
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'type' => $user->type,
-                'status' => $user->status,
-                'token' => $token,
-            ],
-            'errors' => null,
-        ]);
-    }
 
     // Change password
     public function changePassword(Request $request)
