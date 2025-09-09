@@ -54,17 +54,13 @@ class CareerFormController extends Controller
                 $file = $request->file('cv');
 
                 // clean filename
-                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $file->getClientOriginalExtension();
-
-                // unique filename with zantech + timestamp
-                $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+                $originalName = pathinfo($file->getClientOriginalName());
 
                 // move file to folder
-                $file->move(public_path('careers/cv'), $filename);
+                $file->move(public_path('careers/cv'), $originalName);
 
                 // relative path
-                $cvPath = 'careers/cv/' . $filename;
+                $cvPath = 'careers/cv/' . $originalName;
             }
 
             // Save form data
