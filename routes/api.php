@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 // Include all API route files
 require __DIR__ . '/api/activity.php';
 require __DIR__ . '/api/auth.php';
+require __DIR__ . '/api/post.php';
 require __DIR__ . '/api/categorie.php';
 require __DIR__ . '/api/challan.php';
 require __DIR__ . '/api/clint.php';
