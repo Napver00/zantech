@@ -492,8 +492,8 @@ class AuthController extends Controller
                 60 * 24 * 7,          // Minutes (7 days)
                 '/',                  // Path
                 null,                 // Domain (null = current domain)
-                false,                 // Secure (HTTPS only)
-                true,                 // HttpOnly
+                true,                 // Secure (HTTPS only)
+                false,                 // HttpOnly
                 false,                // Raw
                 'None'                // SameSite
             )
