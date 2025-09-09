@@ -185,34 +185,33 @@ class CarrerController extends Controller
             }
 
             // Alternative Solution 2: More explicit approach
-            /*
-        if ($request->filled('job_title')) {
-            $career->job_title = $request->job_title;
-        }
-        if ($request->filled('description')) {
-            $career->description = $request->description;
-        }
-        if ($request->filled('vacancy')) {
-            $career->vacancy = $request->vacancy;
-        }
-        if ($request->filled('job_type')) {
-            $career->job_type = $request->job_type;
-        }
-        if ($request->filled('salary')) {
-            $career->salary = $request->salary;
-        }
-        if ($request->filled('deadline')) {
-            $career->deadline = $request->deadline;
-        }
-        if ($request->filled('department')) {
-            $career->department = $request->department;
-        }
-        if ($request->filled('responsibilities')) {
-            $career->responsibilities = $request->responsibilities;
-        }
-        
-        $career->save();
-        */
+
+            if ($request->filled('job_title')) {
+                $career->job_title = $request->job_title;
+            }
+            if ($request->filled('description')) {
+                $career->description = $request->description;
+            }
+            if ($request->filled('vacancy')) {
+                $career->vacancy = $request->vacancy;
+            }
+            if ($request->filled('job_type')) {
+                $career->job_type = $request->job_type;
+            }
+            if ($request->filled('salary')) {
+                $career->salary = $request->salary;
+            }
+            if ($request->filled('deadline')) {
+                $career->deadline = $request->deadline;
+            }
+            if ($request->filled('department')) {
+                $career->department = $request->department;
+            }
+            if ($request->filled('responsibilities')) {
+                $career->responsibilities = $request->responsibilities;
+            }
+
+            $career->save();
 
             // Refresh the model to get updated data
             $career->refresh();
