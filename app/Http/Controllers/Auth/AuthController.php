@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Mail\VerifyEmail;
+use Illuminate\Support\Facades\Cookie;
 
 class AuthController extends Controller
 {
@@ -369,7 +370,6 @@ class AuthController extends Controller
     public function Userregister(Request $request)
     {
         try {
-            // Validate the request data
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
@@ -389,7 +389,6 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            // Create the user
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -399,10 +398,8 @@ class AuthController extends Controller
                 'status' => 1,
             ]);
 
-            //  Create token after register
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            // Return success response with token
             return response()->json([
                 'success' => true,
                 'status' => 201,
@@ -417,7 +414,7 @@ class AuthController extends Controller
                     'token' => $token,
                 ],
                 'errors' => null,
-            ], 201);
+            ])->cookie('auth_token', $token, 60 * 24); // Cookie valid for 1 day
         } catch (\Exception $e) {
             $errorMessage = $e->getMessage();
 
@@ -488,7 +485,7 @@ class AuthController extends Controller
                 'token' => $token,
             ],
             'errors' => null,
-        ]);
+        ])->cookie('auth_token', $token, 60 * 24); // Cookie valid for 1 day
     }
 
     // Change password
