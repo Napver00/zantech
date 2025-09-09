@@ -206,6 +206,7 @@ class CarrerController extends Controller
     {
         try {
             $career = Career::find($id);
+
             if (!$career) {
                 return response()->json([
                     'success' => false,
@@ -216,12 +217,24 @@ class CarrerController extends Controller
                 ], 404);
             }
 
+            // Loop through related forms and delete CV files
+            foreach ($career->forms as $form) {
+                if ($form->cv) {
+                    $fullPath = public_path($form->cv);
+                    if (file_exists($fullPath)) {
+                        unlink($fullPath); // delete file from storage
+                    }
+                }
+                $form->delete(); // delete DB record
+            }
+
+            // Finally delete the career
             $career->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'message' => 'Career deleted successfully.',
+                'message' => 'Career and related forms deleted successfully.',
                 'data' => null,
                 'errors' => null,
             ], 200);
@@ -235,6 +248,7 @@ class CarrerController extends Controller
             ], 500);
         }
     }
+
 
     // Patch: Change status 0/1
     public function changeStatus($id)
