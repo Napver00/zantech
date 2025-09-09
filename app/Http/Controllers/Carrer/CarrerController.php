@@ -170,7 +170,7 @@ class CarrerController extends Controller
                 ], 422);
             }
 
-            $career->update($request->all());
+            $career->update($validator->validated()); 
 
             return response()->json([
                 'success' => true,
@@ -189,6 +189,7 @@ class CarrerController extends Controller
             ], 500);
         }
     }
+
 
     // Delete career
     public function destroy($id)
