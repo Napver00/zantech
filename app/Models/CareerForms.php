@@ -14,7 +14,7 @@ class CareerForms extends Model
         'name',
         'email',
         'phone',
-        'cover_letter',
+        'cover_later',
         'cv',
     ];
 

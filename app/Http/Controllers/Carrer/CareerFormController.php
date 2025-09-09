@@ -33,7 +33,7 @@ class CareerFormController extends Controller
                 'name'         => 'required|string|max:255',
                 'email'        => 'required|email|max:255|unique:career_forms,email,NULL,id,career_id,' . $career_id,
                 'phone'        => 'required|string|max:20',
-                'cover_letter' => 'nullable|string',
+                'cover_later' => 'nullable|string',
                 'cv'           => 'required|file|mimes:pdf|max:8048',
             ]);
 
@@ -60,7 +60,7 @@ class CareerFormController extends Controller
                 'name'         => $request->name,
                 'email'        => $request->email,
                 'phone'        => $request->phone,
-                'cover_letter' => $request->cover_letter,
+                'cover_later' => $request->cover_letter,
                 'cv'           => $cvPath,
             ]);
 
