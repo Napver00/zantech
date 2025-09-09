@@ -34,7 +34,7 @@ class CareerFormController extends Controller
                 'email'        => 'required|email|max:255|unique:career_forms,email,NULL,id,career_id,' . $career_id,
                 'phone'        => 'required|string|max:20',
                 'cover_letter' => 'nullable|string',
-                // 'cv'           => 'required|file|mimes:pdf|max:8048',
+                'cv'           => 'required|file|mimes:pdf|max:8048',
             ]);
 
             if ($validator->fails()) {
@@ -47,12 +47,12 @@ class CareerFormController extends Controller
             }
 
             // Handle multiple file uploads by looping
-            // $file = $request->file('cv');
-            // $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            // $extension = $file->getClientOriginalExtension();
-            // $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
-            // $file->move(public_path('cv'), $filename);
-            // $cvPath = 'cv/' . $filename;
+            $file = $request->file('cv');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
+            $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+            $file->move(public_path('cv'), $filename);
+            $cvPath = 'cv/' . $filename;
 
 
             // Create the CareerForms record
@@ -62,7 +62,7 @@ class CareerFormController extends Controller
                 'email'        => $request->email,
                 'phone'        => $request->phone,
                 'cover_letter' => $request->cover_letter,
-                // 'cv'           => $cvPath,
+                'cv'           => $cvPath,
             ]);
 
 
