@@ -271,47 +271,35 @@ class PostController extends Controller
             $post = Post::findOrFail($id);
 
             $request->validate([
-                'title'        => 'nullable|string|max:255',
-                'content'      => 'nullable',
-                'tags'         => 'nullable|array',
-                'thumbnail'    => 'nullable|file|mimes:jpg,jpeg,png,gif,webp|max:2048',
-                'meta_title'   => 'nullable|string|max:255',
+                'title' => 'nullable|string|max:255',
+                'content' => 'nullable',
+                'tags' => 'nullable|array',
+                'thumbnail' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp|max:2048',
+                'meta_title' => 'nullable|string|max:255',
                 'meta_description' => 'nullable|string|max:300',
             ]);
 
             $data = $request->only(['title', 'content', 'tags']);
 
-            // Auto-generate meta fields if not provided
             $company = "Zantech Robotic Company in Bangladesh";
-            if ($request->filled('meta_title')) {
-                $data['meta_title'] = $request->meta_title;
-            } elseif ($request->filled('title')) {
-                $data['meta_title'] = $request->title . ' | ' . $company;
-            }
+            $data['meta_title'] = $request->filled('meta_title')
+                ? $request->meta_title
+                : ($request->filled('title') ? $request->title . ' | ' . $company : null);
 
-            if ($request->filled('meta_description')) {
-                $data['meta_description'] = $request->meta_description;
-            } elseif ($request->filled('title')) {
-                $data['meta_description'] = "Learn about " . $request->title . " from " . $company . ".";
-            }
+            $data['meta_description'] = $request->filled('meta_description')
+                ? $request->meta_description
+                : ($request->filled('title') ? "Learn about " . $request->title . " from " . $company . "." : null);
 
-            // Handle thumbnail update
             if ($request->hasFile('thumbnail')) {
-                // delete old thumbnail if exists
-                if ($post->thumbnail) {
-                    $fullPath = public_path($post->thumbnail);
-                    if (file_exists($fullPath)) {
-                        unlink($fullPath);
-                    }
+                if ($post->thumbnail && file_exists(public_path($post->thumbnail))) {
+                    unlink(public_path($post->thumbnail));
                 }
 
                 $file = $request->file('thumbnail');
-                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $file->getClientOriginalExtension();
+                $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), '_')
+                    . '_zantech_' . time() . '.' . $file->getClientOriginalExtension();
 
-                $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
                 $file->move(public_path('thumbnails'), $filename);
-
                 $data['thumbnail'] = 'thumbnails/' . $filename;
             }
 
@@ -319,11 +307,11 @@ class PostController extends Controller
 
             return response()->json([
                 'success' => true,
-                'status'  => 200,
+                'status' => 200,
                 'message' => 'Post updated successfully.',
-                'data'    => $post,
-                'errors'  => null,
-            ], 200);
+                'data' => $post,
+                'errors' => null,
+            ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
