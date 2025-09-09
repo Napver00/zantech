@@ -471,6 +471,19 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Method 1: Using Cookie facade (Recommended)
+        $cookie = Cookie::make(
+            'token',           // name
+            $token,            // value
+            60 * 24 * 7,      // minutes (7 days)
+            '/',              // path
+            null,             // domain (null = current domain)
+            true,             // secure (true for HTTPS)
+            true,             // httpOnly (prevents XSS)
+            false,            // raw
+            'Lax'             // sameSite
+        );
+
         return response()->json([
             'success' => true,
             'status' => 200,
@@ -485,8 +498,7 @@ class AuthController extends Controller
                 'token' => $token,
             ],
             'errors' => null,
-        ])->cookie('token', $token, 60 * 24 * 7); // Cookie valid for 7 days
-
+        ])->withCookie($cookie);
     }
 
     // Change password
