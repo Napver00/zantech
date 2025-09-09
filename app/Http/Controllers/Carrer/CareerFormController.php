@@ -21,14 +21,14 @@ class CareerFormController extends Controller
             if (!$career) {
                 return response()->json([
                     'success' => false,
-                    'status' => 404,
+                    'status'  => 404,
                     'message' => 'Career not found.',
-                    'data' => null,
-                    'errors' => null,
+                    'data'    => null,
+                    'errors'  => null,
                 ], 404);
             }
 
-            // Validate the request data
+            // Validate request
             $validator = Validator::make($request->all(), [
                 'name'         => 'required|string|max:255',
                 'email'        => 'required|email|max:255|unique:career_forms,email,NULL,id,career_id,' . $career_id,
@@ -40,22 +40,21 @@ class CareerFormController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'status' => 400,
+                    'status'  => 400,
                     'message' => 'Validation errors',
-                    'errors' => $validator->errors(),
+                    'errors'  => $validator->errors(),
                 ], 400);
             }
 
-            // Handle multiple file uploads by looping
+            // Save file in storage/app/public/cv
             $file = $request->file('cv');
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $file->getClientOriginalExtension();
             $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
-            $file->move(public_path('cv'), $filename);
-            $cvPath = 'cv/' . $filename;
 
+            $cvPath = $file->storeAs('cv', $filename, 'public'); // saved in storage/app/public/cv
 
-            // Create the CareerForms record
+            // Create form record
             $careerForm = CareerForms::create([
                 'career_id'    => $career->id,
                 'name'         => $request->name,
@@ -65,23 +64,23 @@ class CareerFormController extends Controller
                 'cv'           => $cvPath,
             ]);
 
-
             return response()->json([
                 'success' => true,
-                'status' => 201,
+                'status'  => 201,
                 'message' => 'Career form submitted successfully.',
-                'data' => $careerForm,
-                'errors' => null,
+                'data'    => $careerForm,
+                'errors'  => null,
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'status' => 500,
-                'message' => 'An error occurred while creating the expense.',
-                'errors' => $e->getMessage(),
+                'status'  => 500,
+                'message' => 'An error occurred while submitting the form.',
+                'errors'  => $e->getMessage(),
             ], 500);
         }
     }
+
 
     // Get all submissions for a specific career
     public function index($career_id)

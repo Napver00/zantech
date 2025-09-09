@@ -15,7 +15,7 @@ Route::prefix('careers')->group(function () {
     Route::delete('/{careers_id}', [CarrerController::class, 'destroy']);
     Route::patch('/status/{careers_id}', [CarrerController::class, 'changeStatus']);
 
-    Route::post('/forms{career_id}', [CareerFormController::class, 'store']);
+    Route::post('/forms/{career_id}', [CareerFormController::class, 'store']);
     Route::get('/forms/{career_id}', [CareerFormController::class, 'index']);
     Route::get('/forms/{career_id}/{form_id}', [CareerFormController::class, 'show']);
 
