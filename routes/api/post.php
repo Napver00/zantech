@@ -14,5 +14,5 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-Route::get('/posts', [PostController::class, 'indexPublished']);
+Route::get('/posts/published', [PostController::class, 'indexPublished']);
 Route::get('/posts/{post_id}', [PostController::class, 'show']);

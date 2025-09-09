@@ -133,7 +133,7 @@ class PostController extends Controller
     public function indexPublished(Request $request)
     {
         try {
-            $query = Post::where('status', 'published'); // only published posts
+            $query = Post::where('status', 'published'); 
 
             // Search by title
             if ($request->has('title')) {
