@@ -414,7 +414,7 @@ class AuthController extends Controller
                     'token' => $token,
                 ],
                 'errors' => null,
-            ])->cookie('auth_token', $token, 60 * 24); // Cookie valid for 1 day
+            ])->cookie('token', $token, 60 * 24); // Cookie valid for 1 day
         } catch (\Exception $e) {
             $errorMessage = $e->getMessage();
 
@@ -485,7 +485,7 @@ class AuthController extends Controller
                 'token' => $token,
             ],
             'errors' => null,
-        ])->cookie('auth_token', $token, 60 * 24); // Cookie valid for 1 day
+        ])->cookie('token', $token, 60 * 24); // Cookie valid for 1 day
     }
 
     // Change password
