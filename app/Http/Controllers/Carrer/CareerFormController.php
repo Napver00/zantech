@@ -110,11 +110,16 @@ class CareerFormController extends Controller
                 ];
             });
 
+            $submissionCount = $career->forms()->count();
+
             return response()->json([
                 'success' => true,
                 'status' => 200,
                 'message' => 'Career submissions retrieved successfully.',
-                'data' => $forms,
+                'data' => [
+                    'submissions' => $forms,
+                    'total_submissions' => $submissionCount,
+                ],
                 'errors' => null,
             ], 200);
         } catch (Exception $e) {
@@ -127,6 +132,7 @@ class CareerFormController extends Controller
             ], 500);
         }
     }
+
 
     // Show single submission under a career
     public function show($career_id, $form_id)
