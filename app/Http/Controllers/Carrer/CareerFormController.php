@@ -142,10 +142,10 @@ class CareerFormController extends Controller
             if (!$career) {
                 return response()->json([
                     'success' => false,
-                    'status' => 404,
+                    'status'  => 404,
                     'message' => 'Career not found.',
-                    'data' => null,
-                    'errors' => null,
+                    'data'    => null,
+                    'errors'  => null,
                 ], 404);
             }
 
@@ -155,27 +155,30 @@ class CareerFormController extends Controller
             if (!$form) {
                 return response()->json([
                     'success' => false,
-                    'status' => 404,
+                    'status'  => 404,
                     'message' => 'Submission not found for this career.',
-                    'data' => null,
-                    'errors' => null,
+                    'data'    => null,
+                    'errors'  => null,
                 ], 404);
             }
 
+            // Add full CV URL
+            $form->cv_url = url('public/' . $form->cv);
+
             return response()->json([
                 'success' => true,
-                'status' => 200,
+                'status'  => 200,
                 'message' => 'Submission retrieved successfully.',
-                'data' => $form,
-                'errors' => null,
+                'data'    => $form,
+                'errors'  => null,
             ], 200);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'status' => 500,
+                'status'  => 500,
                 'message' => 'Something went wrong.',
-                'data' => null,
-                'errors' => $e->getMessage(),
+                'data'    => null,
+                'errors'  => $e->getMessage(),
             ], 500);
         }
     }
