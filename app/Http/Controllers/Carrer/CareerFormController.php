@@ -68,7 +68,7 @@ class CareerFormController extends Controller
                 'name'         => $request->name,
                 'email'        => $request->email,
                 'phone'        => $request->phone,
-                'cover_letter' => $request->cover_letter,
+                'cover_later' => $request->cover_letter,
                 'cv'           => $cvPath,
             ]);
 
