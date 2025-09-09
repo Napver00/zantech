@@ -170,7 +170,17 @@ class CarrerController extends Controller
                 ], 422);
             }
 
-            $career->update($validator->validated()); 
+            $career->update([
+                'job_title' => $request->job_title ?? $career->job_title,
+                'description' => $request->description ?? $career->description,
+                'vacancy' => $request->vacancy ?? $career->vacancy,
+                'job_type' => $request->job_type ?? $career->job_type,
+                'salary' => $request->salary ?? $career->salary,
+                'deadline' => $request->deadline ?? $career->deadline,
+                'department' => $request->department ?? $career->department,
+                'responsibilities' => $request->responsibilities ?? $career->responsibilities,
+            ]);
+
 
             return response()->json([
                 'success' => true,
