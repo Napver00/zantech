@@ -414,7 +414,7 @@ class AuthController extends Controller
                     'token' => $token,
                 ],
                 'errors' => null,
-            ])->withCookie(cookie('token', $token, 60 * 24 * 7, '/', null, true, true, false, 'Strict')); // Cookie valid for 7 days
+            ])->cookie('token', $token, 60 * 24 * 7); // Cookie valid for 7 days
         } catch (\Exception $e) {
             $errorMessage = $e->getMessage();
 
@@ -485,19 +485,8 @@ class AuthController extends Controller
                 'token' => $token,
             ],
             'errors' => null,
-        ])->withCookie(
-            cookie(
-                'token',              // Cookie name
-                $token,               // Cookie value
-                60 * 24 * 7,          // Minutes (7 days)
-                '/',                  // Path
-                'https://storeadmin.zantechbd.com',                 // Domain (null = current domain)
-                true,                 // Secure (HTTPS only)
-                false,                 // HttpOnly
-                false,                // Raw
-                'None'                // SameSite
-            )
-        ); // Cookie valid for 7 days
+        ])->cookie('token', $token, 60 * 24 * 7); // Cookie valid for 7 days
+
     }
 
     // Change password
