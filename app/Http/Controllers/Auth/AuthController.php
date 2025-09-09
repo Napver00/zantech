@@ -491,7 +491,7 @@ class AuthController extends Controller
                 $token,               // Cookie value
                 60 * 24 * 7,          // Minutes (7 days)
                 '/',                  // Path
-                null,                 // Domain (null = current domain)
+                'localhost',                 // Domain (null = current domain)
                 true,                 // Secure (HTTPS only)
                 false,                 // HttpOnly
                 false,                // Raw
