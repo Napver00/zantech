@@ -8,6 +8,8 @@ use App\Models\CareerForms;
 use App\Models\Career;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class CareerFormController extends Controller
@@ -31,10 +33,10 @@ class CareerFormController extends Controller
             // Validate request
             $validator = Validator::make($request->all(), [
                 'name'         => 'required|string|max:255',
-                'email'        => 'required|email|max:255',
+                'email'        => 'required|email|max:255|unique:career_forms,email,NULL,id,career_id,' . $career_id,
                 'phone'        => 'required|string|max:20',
                 'cover_letter' => 'nullable|string',
-                'cv'           => 'required|mimes:pdf|max:2048', // only pdf, max 2MB
+                'cv'           => 'required|file|mimes:pdf|max:2048', // Added 'file' rule
             ]);
 
             if ($validator->fails()) {
@@ -53,14 +55,24 @@ class CareerFormController extends Controller
             if ($request->hasFile('cv')) {
                 $file = $request->file('cv');
 
-                // clean filename
-                $originalName = pathinfo($file->getClientOriginalName());
+                // Get original filename info
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension = $file->getClientOriginalExtension();
 
-                // move file to folder
-                $file->move(public_path('careers/cv'), $originalName);
+                // Create unique filename to avoid collisions
+                $fileName = $originalName . '_' . time() . '_' . uniqid() . '.' . $extension;
 
-                // relative path
-                $cvPath = 'careers/cv/' . $originalName;
+                // Ensure directory exists
+                $uploadPath = public_path('careers/cv');
+                if (!File::exists($uploadPath)) {
+                    File::makeDirectory($uploadPath, 0755, true);
+                }
+
+                // Move file to folder with new name
+                $file->move($uploadPath, $fileName);
+
+                // Store relative path
+                $cvPath = 'careers/cv/' . $fileName;
             }
 
             // Save form data
@@ -81,12 +93,19 @@ class CareerFormController extends Controller
                 'errors' => null,
             ], 201);
         } catch (Exception $e) {
+            // Log the error for debugging
+            Log::error('Career form submission error: ' . $e->getMessage(), [
+                'career_id' => $career_id,
+                'request_data' => $request->except(['cv']), // Don't log file data
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'status' => 500,
                 'message' => 'Something went wrong.',
                 'data' => null,
-                'errors' => $e->getMessage(),
+                'errors' => config('app.debug') ? $e->getMessage() : 'Internal server error',
             ], 500);
         }
     }
