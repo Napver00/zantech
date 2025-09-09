@@ -473,16 +473,17 @@ class AuthController extends Controller
 
         // Method 1: Using Cookie facade (Recommended)
         $cookie = Cookie::make(
-            'token',           // name
-            $token,            // value
-            60 * 24 * 7,      // minutes (7 days)
-            '/',              // path
-            null,             // domain (null = current domain)
-            true,             // secure (true for HTTPS)
-            true,             // httpOnly (prevents XSS)
-            false,            // raw
-            'Lax'             // sameSite
+            'token',        // name
+            $token,         // value
+            0,              // expiry = 0 => session cookie
+            '/',            // path
+            null,           // domain (null = current domain)
+            true,           // secure = true (only HTTPS)
+            true,           // httpOnly
+            false,          // raw
+            'None'          // SameSite = None
         );
+
 
         return response()->json([
             'success' => true,
