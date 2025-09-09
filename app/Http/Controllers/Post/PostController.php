@@ -112,11 +112,8 @@ class PostController extends Controller
                 return [
                     'id'         => $post->id,
                     'title'      => $post->title,
-                    'slug'       => $post->slug,
-                    'thumbnail'  => $post->thumbnail ? url('public/' . $post->thumbnail) : null,
                     'category'   => $post->category,
                     'tags'       => $post->tags,
-                    'meta_title' => $post->meta_title,
                     'status'     => $post->status,
                     'created_at' => $post->created_at,
                 ];
