@@ -372,14 +372,12 @@ class AuthController extends Controller
             // Validate the request data
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8',
                 'phone' => 'required|string|size:11|unique:users',
             ]);
 
-            // If validation fails, return error response
             if ($validator->fails()) {
-                // Get the first error message
                 $errorMessage = $validator->errors()->first();
 
                 return response()->json([
@@ -401,7 +399,10 @@ class AuthController extends Controller
                 'status' => 1,
             ]);
 
-            // Return success response
+            //  Create token after register
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Return success response with token
             return response()->json([
                 'success' => true,
                 'status' => 201,
@@ -413,14 +414,13 @@ class AuthController extends Controller
                     'phone' => $user->phone,
                     'type' => $user->type,
                     'status' => $user->status,
+                    'token' => $token,
                 ],
                 'errors' => null,
             ], 201);
         } catch (\Exception $e) {
-            // Extract only the main error message
             $errorMessage = $e->getMessage();
 
-            // Handle any exceptions
             return response()->json([
                 'success' => false,
                 'status' => 500,
@@ -430,6 +430,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
 
     // user login
     public function Userlogin(Request $request)
