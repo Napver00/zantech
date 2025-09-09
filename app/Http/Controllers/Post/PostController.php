@@ -151,33 +151,42 @@ class PostController extends Controller
     }
 
 
-
     public function indexPublished(Request $request)
     {
         try {
-            $query = Post::where('status', 'published');
+            $query = Post::where('status', 'published')->orderBy('created_at', 'desc');
 
-            // Search by title
+            // Filters
             if ($request->has('title')) {
                 $query->where('title', 'like', '%' . $request->title . '%');
             }
 
-            // Filter by category
             if ($request->has('category')) {
                 $query->where('category', $request->category);
             }
 
-            // Filter by created_at date
             if ($request->has('date')) {
                 $query->whereDate('created_at', $request->date);
             }
 
-            // Pagination
             $perPage = $request->input('limit', 5);
-            $posts = $query->orderBy('created_at', 'desc')->paginate($perPage);
+            $currentPage = $request->input('page', 1);
 
-            // Format thumbnail URL
-            $posts->getCollection()->transform(function ($post) {
+            // Validate pagination params
+            if (!is_numeric($perPage) || !is_numeric($currentPage) || $perPage <= 0 || $currentPage <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 400,
+                    'message' => 'Invalid pagination parameters.',
+                    'data' => null,
+                    'errors' => 'Invalid pagination parameters.',
+                ], 400);
+            }
+
+            $posts = $query->paginate($perPage, ['*'], 'page', $currentPage);
+
+            // Transform posts
+            $postsData = $posts->getCollection()->transform(function ($post) {
                 return [
                     'id'         => $post->id,
                     'title'      => $post->title,
@@ -191,11 +200,21 @@ class PostController extends Controller
                 ];
             });
 
+            // If only one post, return as object instead of array
+            $data = $postsData->count() === 1 ? $postsData->first() : $postsData;
+
             return response()->json([
                 'success' => true,
                 'status'  => 200,
                 'message' => 'Published posts retrieved successfully.',
-                'data'    => $posts,
+                'data'    => $data,
+                'pagination' => [
+                    'total_rows'     => $posts->total(),
+                    'current_page'   => $posts->currentPage(),
+                    'per_page'       => $posts->perPage(),
+                    'total_pages'    => $posts->lastPage(),
+                    'has_more_pages' => $posts->hasMorePages(),
+                ],
                 'errors'  => null,
             ], 200);
         } catch (\Exception $e) {
