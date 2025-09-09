@@ -13,7 +13,7 @@ Route::prefix('careers')->group(function () {
     Route::post('/', [CarrerController::class, 'store']);
     Route::put('/{careers_id}', [CarrerController::class, 'update']);
     Route::delete('/{careers_id}', [CarrerController::class, 'destroy']);
-    Route::patch('/{careers_id}/status', [CarrerController::class, 'changeStatus']);
+    Route::patch('/status{careers_id}', [CarrerController::class, 'changeStatus']);
 
     Route::post('/forms{career_id}', [CareerFormController::class, 'store']);
     Route::get('/forms/{career_id}', [CareerFormController::class, 'index']);
