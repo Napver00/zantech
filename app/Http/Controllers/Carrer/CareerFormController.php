@@ -8,8 +8,6 @@ use App\Models\CareerForms;
 use App\Models\Career;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Exception;
 
 class CareerFormController extends Controller
@@ -30,52 +28,44 @@ class CareerFormController extends Controller
                 ], 404);
             }
 
-            // Validate request
+            // Validate the request data
             $validator = Validator::make($request->all(), [
                 'name'         => 'required|string|max:255',
                 'email'        => 'required|email|max:255|unique:career_forms,email,NULL,id,career_id,' . $career_id,
                 'phone'        => 'required|string|max:20',
                 'cover_letter' => 'nullable|string',
-                'cv'           => 'required|file|mimes:pdf|max:2048', // Added 'file' rule
+                'cv'           => 'required|file|mimes:pdf|max:8048',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'status' => 422,
-                    'message' => 'Validation errors.',
-                    'data' => null,
+                    'status' => 400,
+                    'message' => 'Validation errors',
                     'errors' => $validator->errors(),
-                ], 422);
+                ], 400);
             }
 
-            $cvPath = null;
-
-            // Handle CV file upload
+            // Handle multiple file uploads by looping
             if ($request->hasFile('cv')) {
-                $file = $request->file('cv');
+                // $request->file('prove') will be an array of files
+                foreach ($request->file('cv') as $file) {
+                    // clean filename
+                    $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    $extension = $file->getClientOriginalExtension();
 
-                // Get original filename info
-                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $file->getClientOriginalExtension();
+                    // unique filename with zantech + timestamp
+                    $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
 
-                // Create unique filename to avoid collisions
-                $fileName = $originalName . '_' . time() . '_' . uniqid() . '.' . $extension;
+                    // move the file to the public/expense directory
+                    $file->move(public_path('cv'), $filename);
 
-                // Ensure directory exists
-                $uploadPath = public_path('careers/cv');
-                if (!File::exists($uploadPath)) {
-                    File::makeDirectory($uploadPath, 0755, true);
+                    // Create the relative path to store in the database
+                    $cvPath = 'cv/' . $filename;
                 }
-
-                // Move file to folder with new name
-                $file->move($uploadPath, $fileName);
-
-                // Store relative path
-                $cvPath = 'careers/cv/' . $fileName;
             }
 
-            // Save form data
+            // Create the CareerForms record
             $careerForm = CareerForms::create([
                 'career_id'    => $career->id,
                 'name'         => $request->name,
@@ -85,6 +75,7 @@ class CareerFormController extends Controller
                 'cv'           => $cvPath,
             ]);
 
+
             return response()->json([
                 'success' => true,
                 'status' => 201,
@@ -92,24 +83,15 @@ class CareerFormController extends Controller
                 'data' => $careerForm,
                 'errors' => null,
             ], 201);
-        } catch (Exception $e) {
-            // Log the error for debugging
-            Log::error('Career form submission error: ' . $e->getMessage(), [
-                'career_id' => $career_id,
-                'request_data' => $request->except(['cv']), // Don't log file data
-                'trace' => $e->getTraceAsString()
-            ]);
-
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'status' => 500,
-                'message' => 'Something went wrong.',
-                'data' => null,
-                'errors' => config('app.debug') ? $e->getMessage() : 'Internal server error',
+                'message' => 'An error occurred while creating the expense.',
+                'errors' => $e->getMessage(),
             ], 500);
         }
     }
-
 
     // Get all submissions for a specific career
     public function index($career_id)
