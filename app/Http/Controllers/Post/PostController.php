@@ -127,78 +127,119 @@ class PostController extends Controller
     // Update Post
     public function update(Request $request, $id)
     {
-        $post = Post::findOrFail($id);
+        try {
+            $post = Post::findOrFail($id);
 
-        $request->validate([
-            'title'   => 'nullable|string|max:255',
-            'content' => 'nullable',
-            'tags'    => 'nullable|array',
-            'thumbnail' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp|max:2048',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:300',
-        ]);
+            $request->validate([
+                'title'        => 'nullable|string|max:255',
+                'content'      => 'nullable',
+                'tags'         => 'nullable|array',
+                'thumbnail'    => 'nullable|file|mimes:jpg,jpeg,png,gif,webp|max:2048',
+                'meta_title'   => 'nullable|string|max:255',
+                'meta_description' => 'nullable|string|max:300',
+            ]);
 
-        $data = $request->only(['title', 'content', 'tags']);
+            $data = $request->only(['title', 'content', 'tags']);
 
-        // Auto-generate meta fields if not provided
-        $company = "Zantech Robotic Company in Bangladesh";
-        if ($request->filled('meta_title')) {
-            $data['meta_title'] = $request->meta_title;
-        } elseif ($request->filled('title')) {
-            $data['meta_title'] = $request->title . ' | ' . $company;
-        }
-
-        if ($request->filled('meta_description')) {
-            $data['meta_description'] = $request->meta_description;
-        } elseif ($request->filled('title')) {
-            $data['meta_description'] = "Learn about " . $request->title . " from " . $company . ".";
-        }
-
-        // Handle thumbnail update
-        if ($request->hasFile('thumbnail')) {
-            // delete old thumbnail if exists
-            if ($post->thumbnail) {
-                $fullPath = public_path($post->thumbnail);
-                if (file_exists($fullPath)) {
-                    unlink($fullPath);
-                }
+            // Auto-generate meta fields if not provided
+            $company = "Zantech Robotic Company in Bangladesh";
+            if ($request->filled('meta_title')) {
+                $data['meta_title'] = $request->meta_title;
+            } elseif ($request->filled('title')) {
+                $data['meta_title'] = $request->title . ' | ' . $company;
             }
 
-            $file = $request->file('thumbnail');
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
+            if ($request->filled('meta_description')) {
+                $data['meta_description'] = $request->meta_description;
+            } elseif ($request->filled('title')) {
+                $data['meta_description'] = "Learn about " . $request->title . " from " . $company . ".";
+            }
 
-            $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
-            $file->move(public_path('thumbnails'), $filename);
+            // Handle thumbnail update
+            if ($request->hasFile('thumbnail')) {
+                // delete old thumbnail if exists
+                if ($post->thumbnail) {
+                    $fullPath = public_path($post->thumbnail);
+                    if (file_exists($fullPath)) {
+                        unlink($fullPath);
+                    }
+                }
 
-            $data['thumbnail'] = 'thumbnails/' . $filename;
+                $file = $request->file('thumbnail');
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension = $file->getClientOriginalExtension();
+
+                $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+                $file->move(public_path('thumbnails'), $filename);
+
+                $data['thumbnail'] = 'thumbnails/' . $filename;
+            }
+
+            $post->update($data);
+
+            return response()->json([
+                'success' => true,
+                'status'  => 200,
+                'message' => 'Post updated successfully.',
+                'data'    => $post,
+                'errors'  => null,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 404,
+                'message' => 'Post not found.',
+                'data'    => null,
+                'errors'  => $e->getMessage(),
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 500,
+                'message' => 'Something went wrong while updating the post.',
+                'data'    => null,
+                'errors'  => $e->getMessage(),
+            ], 500);
         }
-
-        $post->update($data);
-
-        return response()->json([
-            'success' => true,
-            'status'  => 200,
-            'message' => 'Post updated successfully.',
-            'data'    => $post,
-            'errors'  => null,
-        ], 200);
     }
+
 
 
     // Change Status (Draft <-> Published)
     public function toggleStatus($id)
     {
-        $post = Post::findOrFail($id);
+        try {
+            $post = Post::findOrFail($id);
 
-        $post->status = $post->status === 'draft' ? 'published' : 'draft';
-        $post->save();
+            $post->status = $post->status === 'draft' ? 'published' : 'draft';
+            $post->save();
 
-        return response()->json([
-            'success' => true,
-            'status'  => $post->status,
-        ]);
+            return response()->json([
+                'success' => true,
+                'status'  => 200,
+                'message' => 'Post status updated successfully.',
+                'data'    => ['id' => $post->id, 'status' => $post->status],
+                'errors'  => null,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 404,
+                'message' => 'Post not found.',
+                'data'    => null,
+                'errors'  => $e->getMessage(),
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 500,
+                'message' => 'Something went wrong while updating the status.',
+                'data'    => null,
+                'errors'  => $e->getMessage(),
+            ], 500);
+        }
     }
+
 
     // Delete Post + Thumbnail
     public function destroy($id)
