@@ -105,10 +105,9 @@ class PostController extends Controller
                 ], 400);
             }
 
-            // Paginate
             $posts = $query->paginate($perPage, ['*'], 'page', $currentPage);
 
-            // Transform data
+            // Transform posts
             $postsData = $posts->getCollection()->transform(function ($post) {
                 return [
                     'id'         => $post->id,
@@ -123,11 +122,14 @@ class PostController extends Controller
                 ];
             });
 
+            // If only one post, return as object instead of array
+            $data = $postsData->count() === 1 ? $postsData->first() : $postsData;
+
             return response()->json([
                 'success' => true,
                 'status'  => 200,
                 'message' => 'Posts retrieved successfully.',
-                'data'    => $postsData,
+                'data'    => $data,
                 'pagination' => [
                     'total_rows'     => $posts->total(),
                     'current_page'   => $posts->currentPage(),
@@ -147,6 +149,7 @@ class PostController extends Controller
             ], 500);
         }
     }
+
 
 
     public function indexPublished(Request $request)
