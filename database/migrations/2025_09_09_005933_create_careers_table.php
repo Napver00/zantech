@@ -21,6 +21,7 @@ return new class extends Migration
             $table->date('deadline');
             $table->string('department');
             $table->text('responsibilities');
+            $table->integer('status')->default(0);
             $table->timestamps();
         });
     }

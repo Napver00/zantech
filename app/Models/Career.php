@@ -18,6 +18,7 @@ class Career extends Model
         'deadline',
         'department',
         'responsibilities',
+        'status'
     ];
 
     // Relationships
