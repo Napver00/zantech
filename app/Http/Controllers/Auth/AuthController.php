@@ -475,7 +475,7 @@ class AuthController extends Controller
         $cookie = Cookie::make(
             'token',        // name
             $token,         // value
-            0,              // expiry = 0 => session cookie
+            1440,           // 1 day (in minutes)
             '/',            // path
             null,           // domain (null = current domain)
             true,           // secure = true (only HTTPS)
@@ -483,6 +483,7 @@ class AuthController extends Controller
             false,          // raw
             'None'          // SameSite = None
         );
+
 
 
         return response()->json([
