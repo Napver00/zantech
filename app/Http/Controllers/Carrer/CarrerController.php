@@ -170,17 +170,52 @@ class CarrerController extends Controller
                 ], 422);
             }
 
-            $career->update([
-                'job_title' => $request->job_title ?? $career->job_title,
-                'description' => $request->description ?? $career->description,
-                'vacancy' => $request->vacancy ?? $career->vacancy,
-                'job_type' => $request->job_type ?? $career->job_type,
-                'salary' => $request->salary ?? $career->salary,
-                'deadline' => $request->deadline ?? $career->deadline,
-                'department' => $request->department ?? $career->department,
-                'responsibilities' => $request->responsibilities ?? $career->responsibilities,
-            ]);
+            // Solution 1: Use only validated data that's present
+            $updateData = [];
+            $validatedData = $validator->validated();
 
+            foreach ($validatedData as $key => $value) {
+                if ($request->filled($key)) {
+                    $updateData[$key] = $value;
+                }
+            }
+
+            if (!empty($updateData)) {
+                $career->update($updateData);
+            }
+
+            // Alternative Solution 2: More explicit approach
+            /*
+        if ($request->filled('job_title')) {
+            $career->job_title = $request->job_title;
+        }
+        if ($request->filled('description')) {
+            $career->description = $request->description;
+        }
+        if ($request->filled('vacancy')) {
+            $career->vacancy = $request->vacancy;
+        }
+        if ($request->filled('job_type')) {
+            $career->job_type = $request->job_type;
+        }
+        if ($request->filled('salary')) {
+            $career->salary = $request->salary;
+        }
+        if ($request->filled('deadline')) {
+            $career->deadline = $request->deadline;
+        }
+        if ($request->filled('department')) {
+            $career->department = $request->department;
+        }
+        if ($request->filled('responsibilities')) {
+            $career->responsibilities = $request->responsibilities;
+        }
+        
+        $career->save();
+        */
+
+            // Refresh the model to get updated data
+            $career->refresh();
 
             return response()->json([
                 'success' => true,
