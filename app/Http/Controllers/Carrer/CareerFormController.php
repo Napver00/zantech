@@ -46,23 +46,32 @@ class CareerFormController extends Controller
                 ], 400);
             }
 
-            // Save file in storage/app/public/cv
+            // Save file 
             $file = $request->file('cv');
+
+            // clean filename
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $file->getClientOriginalExtension();
+
+            // unique filename with zantech + timestamp
             $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
 
-            $cvPath = $file->storeAs('cv', $filename, 'public'); // saved in storage/app/public/cv
+            // move the file to the public/cv directory
+            $file->move(public_path('cv'), $filename);
 
-            // Create form record
+            // Create the relative path to store in the database
+            $cvPath = 'cv/' . $filename;
+
+            // Save record
             $careerForm = CareerForms::create([
                 'career_id'    => $career->id,
                 'name'         => $request->name,
                 'email'        => $request->email,
                 'phone'        => $request->phone,
-                'cover_later' => $request->cover_letter,
+                'cover_letter' => $request->cover_letter,
                 'cv'           => $cvPath,
             ]);
+
 
             return response()->json([
                 'success' => true,
