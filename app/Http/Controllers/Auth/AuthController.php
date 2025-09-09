@@ -491,7 +491,7 @@ class AuthController extends Controller
                 $token,               // Cookie value
                 60 * 24 * 7,          // Minutes (7 days)
                 '/',                  // Path
-                'localhost',                 // Domain (null = current domain)
+                'https://storeadmin.zantechbd.com',                 // Domain (null = current domain)
                 true,                 // Secure (HTTPS only)
                 false,                 // HttpOnly
                 false,                // Raw
