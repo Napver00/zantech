@@ -485,8 +485,19 @@ class AuthController extends Controller
                 'token' => $token,
             ],
             'errors' => null,
-        ])->withCookie(cookie('token', $token, 60 * 24 * 7, '/', null, true, true, false, 'Strict')); // Cookie valid for 7 days
-
+        ])->withCookie(
+            cookie(
+                'token',              // Cookie name
+                $token,               // Cookie value
+                60 * 24 * 7,          // Minutes (7 days)
+                '/',                  // Path
+                null,                 // Domain (null = current domain)
+                true,                 // Secure (HTTPS only)
+                true,                 // HttpOnly
+                false,                // Raw
+                'None'                // SameSite
+            )
+        ); // Cookie valid for 7 days
     }
 
     // Change password
