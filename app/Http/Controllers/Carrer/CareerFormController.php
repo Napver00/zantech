@@ -47,23 +47,13 @@ class CareerFormController extends Controller
             }
 
             // Handle multiple file uploads by looping
-            if ($request->hasFile('cv')) {
-                // $request->file('prove') will be an array of files
-                foreach ($request->file('cv') as $file) {
-                    // clean filename
-                    $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                    $extension = $file->getClientOriginalExtension();
+            $file = $request->file('cv');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
+            $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
+            $file->move(public_path('cv'), $filename);
+            $cvPath = 'cv/' . $filename;
 
-                    // unique filename with zantech + timestamp
-                    $filename = Str::slug($originalName, '_') . '_zantech_' . time() . '.' . $extension;
-
-                    // move the file to the public/expense directory
-                    $file->move(public_path('cv'), $filename);
-
-                    // Create the relative path to store in the database
-                    $cvPath = 'cv/' . $filename;
-                }
-            }
 
             // Create the CareerForms record
             $careerForm = CareerForms::create([
