@@ -18,8 +18,6 @@ class PostController extends Controller
             'content'     => 'required',
             'category'    => 'nullable|string',
             'tags'        => 'nullable|array',
-            'meta_title'  => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:300',
             'thumbnail'   => 'nullable|file|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
 
@@ -28,14 +26,17 @@ class PostController extends Controller
             'content',
             'category',
             'tags',
-            'meta_title',
-            'meta_description'
         ]);
 
         // slug
         $data['slug'] = Str::slug($request->title, '-');
         $data['author_id'] = auth()->id(); // logged in user id
         $data['status'] = 'draft';
+
+        // Auto-generate meta fields
+        $company = "Zantech Robotic Company in Bangladesh";
+        $data['meta_title'] = $request->title . ' | ' . $company;
+        $data['meta_description'] = "Learn about " . $request->title . " from " . $company . ".";
 
         // Save thumbnail
         if ($request->hasFile('thumbnail')) {
@@ -53,9 +54,13 @@ class PostController extends Controller
 
         return response()->json([
             'success' => true,
+            'status'  => 200,
+            'message' => 'Post created successfully.',
             'data'    => $post,
-        ]);
+            'errors'  => null,
+        ], 200);
     }
+
 
     // Show all posts with filters, search, pagination
     public function index(Request $request)
