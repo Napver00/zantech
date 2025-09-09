@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('description');
             $table->integer('vacancy');
             $table->string('job_type');
-            $table->integer('salary');
+            $table->string('salary');
             $table->date('deadline');
             $table->string('department');
             $table->text('responsibilities');
