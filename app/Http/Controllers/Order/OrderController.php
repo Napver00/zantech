@@ -490,91 +490,96 @@ class OrderController extends Controller
     public function userindex(Request $request)
     {
         try {
-            // Get 'limit', 'page', 'user_id', and 'search' from request
-            $perPage = $request->input('limit');
+            $perPage    = $request->input('limit');
             $currentPage = $request->input('page');
-            $userId = $request->input('user_id');
-            $search = $request->input('search');
+            $userId     = $request->input('user_id');
+            $search     = $request->input('search');
 
-            // Start with a base query
-            $query = Order::with('user')->orderBy('created_at', 'desc');
+            //  Load user + orderItems + product.images
+            $query = Order::with(['user', 'orderItems.product.images'])
+                ->orderBy('created_at', 'desc');
 
-            // Filter by user_id if provided
             if ($userId) {
                 $query->where('user_id', $userId);
             }
 
-            // Apply search filter if 'search' parameter is provided
             if ($search) {
                 $query->where('invoice_code', 'like', '%' . $search . '%');
             }
 
-            // Apply pagination only if 'limit' and 'page' are provided
             if ($perPage && $currentPage) {
                 $orders = $query->paginate($perPage, ['*'], 'page', $currentPage);
             } else {
-                // Fetch all orders if pagination parameters are not provided
                 $orders = $query->get();
             }
 
-            // Format the response data
+            //  Format data
             $formattedOrders = $orders->map(function ($order) {
                 return [
-                    'user_name' => $order->user->name,
+                    'user_name'  => $order->user->name,
                     'user_phone' => $order->user->phone,
                     'user_email' => $order->user->email,
-                    'order_id' => $order->id,
+                    'order_id'   => $order->id,
                     'invoice_code' => $order->invoice_code,
-                    'status' => $order->status,
+                    'status'     => $order->status,
                     'total_amount' => $order->total_amount,
-                    'order_placed_date_time' => $order->created_at->format('Y-m-d H:i:s'),
+                    'order_placed_date' => $order->created_at->format('Y-m-d H:i:s'),
+
+                    // Related products
+                    'products'   => $order->orderItems->map(function ($item) {
+                        $image = $item->product->images->first()?->path;
+                        return [
+                            'product_id'   => $item->product->id,
+                            'name'         => $item->product->name,
+                            'slug'         => $item->product->slug,
+                            'image'        => $image
+                                ? asset('storage/' . str_replace('public/', '', $image))
+                                : null,
+                        ];
+                    }),
                 ];
             });
 
-            // Prepare the response
             $response = [
                 'success' => true,
-                'status' => 200,
+                'status'  => 200,
                 'message' => 'Orders fetched successfully.',
-                'data' => $formattedOrders,
-                'errors' => null,
+                'data'    => $formattedOrders,
+                'errors'  => null,
             ];
 
-            // Add pagination metadata if pagination is applied
             if ($perPage && $currentPage) {
                 $response['pagination'] = [
-                    'total' => $orders->total(),
-                    'per_page' => $orders->perPage(),
+                    'total'        => $orders->total(),
+                    'per_page'     => $orders->perPage(),
                     'current_page' => $orders->currentPage(),
-                    'last_page' => $orders->lastPage(),
-                    'from' => $orders->firstItem(),
-                    'to' => $orders->lastItem(),
+                    'last_page'    => $orders->lastPage(),
+                    'from'         => $orders->firstItem(),
+                    'to'           => $orders->lastItem(),
                 ];
             }
 
-            // Return the response as JSON
             return response()->json($response, 200);
         } catch (\Exception $e) {
-            // Extract only the main error message
             $errorMessage = $e->getMessage();
 
-            // Check if it's a SQL Integrity Constraint Violation
             if (str_contains($errorMessage, 'Integrity constraint violation')) {
                 preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
                 if (!empty($matches)) {
                     $errorMessage = "Duplicate entry '{$matches[1]}' for key '{$matches[2]}'";
                 }
             }
-            // Handle exceptions and return error response
+
             return response()->json([
                 'success' => false,
-                'status' => 500,
+                'status'  => 500,
                 'message' => 'Failed to fetch orders.',
-                'data' => null,
-                'errors' => $errorMessage,
+                'data'    => null,
+                'errors'  => $errorMessage,
             ], 500);
         }
     }
+
 
     // shwo single order
     public function show($orderId)
