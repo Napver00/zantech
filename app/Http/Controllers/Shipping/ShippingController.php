@@ -239,7 +239,7 @@ class ShippingController extends Controller
 
 
     // user shipping address
-    public function serindex()
+    public function userindex()
     {
         try {
             // Get user_id from auth
