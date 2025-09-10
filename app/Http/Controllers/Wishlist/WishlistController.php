@@ -79,7 +79,7 @@ class WishlistController extends Controller
         // Fetch wishlist items for the user with product details, sorted by created_at descending
         $wishlistQuery = Wishlist::where('user_id', $user_id)
             ->with('product.images')
-            ->orderBy('created_at', 'desc'); 
+            ->orderBy('created_at', 'desc');
 
         // Check if pagination parameters are provided
         if ($perPage && $currentPage) {
@@ -103,6 +103,7 @@ class WishlistController extends Controller
         $wishlistData = $wishlistItems->map(function ($wishlist) {
             return [
                 'product_id' => $wishlist->product->id,
+                'product_slug' => $wishlist->product->slug,
                 'name' => $wishlist->product->name,
                 'price' => $wishlist->product->price,
                 'discount' => $wishlist->product->discount,
