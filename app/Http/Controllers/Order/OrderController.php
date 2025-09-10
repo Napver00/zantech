@@ -509,9 +509,10 @@ class OrderController extends Controller
             }
 
             // Load orders for logged in user + orderItems + product.images
-            $query = Order::with(['user', 'orderItems.product.images'])
+            $query = Order::with(['user', 'orderItems.item.images'])
                 ->where('user_id', $userId)
                 ->orderBy('created_at', 'desc');
+
 
             if ($search) {
                 $query->where('invoice_code', 'like', '%' . $search . '%');
@@ -536,16 +537,17 @@ class OrderController extends Controller
                     'order_placed_date' => $order->created_at->format('Y-m-d H:i:s'),
 
                     'products' => $order->orderItems->map(function ($item) {
-                        $image = $item->product->images->first()?->path;
+                        $image = $item->item->images->first()?->path;
                         return [
-                            'product_id' => $item->product->id,
-                            'name'       => $item->product->name,
-                            'slug'       => $item->product->slug,
+                            'product_id' => $item->item->id,
+                            'name'       => $item->item->name,
+                            'slug'       => $item->item->slug,
                             'image'      => $image
                                 ? asset('storage/' . str_replace('public/', '', $image))
                                 : null,
                         ];
                     }),
+
                 ];
             });
 
