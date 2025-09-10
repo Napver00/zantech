@@ -274,6 +274,7 @@ class PostController extends Controller
                 'title' => 'nullable|string|max:255',
                 'content' => 'nullable',
                 'tags' => 'nullable|array',
+                'category' => 'nullable|string|in:Blog,Tutorial',
                 'thumbnail' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp|max:2048',
                 'meta_title' => 'nullable|string|max:255',
                 'meta_description' => 'nullable|string|max:300',
