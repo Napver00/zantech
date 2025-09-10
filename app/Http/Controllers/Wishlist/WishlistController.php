@@ -70,13 +70,16 @@ class WishlistController extends Controller
 
 
     // Show wishlist items for a specific user
-    public function show(Request $request, $user_id)
+    public function show(Request $request)
     {
-        // Get 'limit' and 'page' from request, default to null
+        // Get user id from auth
+        $user_id = auth()->id();
+
+        // Get 'limit' and 'page' from request
         $perPage = $request->input('limit');
         $currentPage = $request->input('page');
 
-        // Fetch wishlist items for the user with product details, sorted by created_at descending
+        // Fetch wishlist items for the user with product details
         $wishlistQuery = Wishlist::where('user_id', $user_id)
             ->with('product.images')
             ->orderBy('created_at', 'desc');
@@ -85,7 +88,7 @@ class WishlistController extends Controller
         if ($perPage && $currentPage) {
             $wishlistItems = $wishlistQuery->paginate($perPage);
         } else {
-            $wishlistItems = $wishlistQuery->get(); // Fetch all data if no pagination
+            $wishlistItems = $wishlistQuery->get();
         }
 
         // Check if wishlist is empty
@@ -120,7 +123,6 @@ class WishlistController extends Controller
             'has_more_pages' => $wishlistItems->hasMorePages(),
         ] : null;
 
-        // Return JSON response
         return response()->json([
             'success' => true,
             'status' => 200,
@@ -130,6 +132,7 @@ class WishlistController extends Controller
             'error' => null,
         ], 200);
     }
+
 
 
     // remove items from wishlist

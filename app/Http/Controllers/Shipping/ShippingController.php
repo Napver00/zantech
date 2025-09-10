@@ -236,4 +236,35 @@ class ShippingController extends Controller
             ], 500);
         }
     }
+
+
+    // user shipping address
+    public function serindex()
+    {
+        try {
+            // Get user_id from auth
+            $user_id = auth()->id();
+
+            // Fetch all shipping addresses of the logged-in user in descending order
+            $shippingAddresses = ShippingAddress::where('user_id', $user_id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'message' => 'Shipping addresses retrieved successfully.',
+                'data' => $shippingAddresses,
+                'errors' => null,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Failed to retrieve shipping addresses.',
+                'data' => null,
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

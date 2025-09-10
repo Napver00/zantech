@@ -11,5 +11,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{shipping_id}', [ShippingController::class, 'show']);
         Route::put('/{shipping_id}', [ShippingController::class, 'update']);
         Route::delete('/{shipping_id}', [ShippingController::class, 'destroy']);
+
+        Route::get('/', [ShippingController::class, 'userindex']);
     });
 });

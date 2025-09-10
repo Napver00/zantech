@@ -9,7 +9,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // whshltist routes
     Route::prefix('wishlist')->group(function () {
         Route::post('/', [WishlistController::class, 'store']);
-        Route::get('/{user_id}', [WishlistController::class, 'show']);
+        Route::get('/', [WishlistController::class, 'show']);
         Route::delete('/{wishlist_id}', [WishlistController::class, 'destroy']);
     });
 });
