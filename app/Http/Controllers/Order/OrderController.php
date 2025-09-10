@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\SendOrderEmailsJob;
 
 
+
 class OrderController extends Controller
 {
     //plase order by user
@@ -490,18 +491,27 @@ class OrderController extends Controller
     public function userindex(Request $request)
     {
         try {
-            $perPage    = $request->input('limit');
+            $perPage     = $request->input('limit');
             $currentPage = $request->input('page');
-            $userId     = $request->input('user_id');
-            $search     = $request->input('search');
+            $search      = $request->input('search');
 
-            //  Load user + orderItems + product.images
-            $query = Order::with(['user', 'orderItems.product.images'])
-                ->orderBy('created_at', 'desc');
+            // Get logged-in user ID from token
+            $userId = Auth::id();
 
-            if ($userId) {
-                $query->where('user_id', $userId);
+            if (!$userId) {
+                return response()->json([
+                    'success' => false,
+                    'status'  => 401,
+                    'message' => 'Unauthorized. Please login.',
+                    'data'    => null,
+                    'errors'  => 'No valid user token found.',
+                ], 401);
             }
+
+            // Load orders for logged in user + orderItems + product.images
+            $query = Order::with(['user', 'orderItems.product.images'])
+                ->where('user_id', $userId)
+                ->orderBy('created_at', 'desc');
 
             if ($search) {
                 $query->where('invoice_code', 'like', '%' . $search . '%');
@@ -513,26 +523,25 @@ class OrderController extends Controller
                 $orders = $query->get();
             }
 
-            //  Format data
+            // Format data
             $formattedOrders = $orders->map(function ($order) {
                 return [
-                    'user_name'  => $order->user->name,
-                    'user_phone' => $order->user->phone,
-                    'user_email' => $order->user->email,
-                    'order_id'   => $order->id,
-                    'invoice_code' => $order->invoice_code,
-                    'status'     => $order->status,
-                    'total_amount' => $order->total_amount,
+                    'user_name'        => $order->user->name,
+                    'user_phone'       => $order->user->phone,
+                    'user_email'       => $order->user->email,
+                    'order_id'         => $order->id,
+                    'invoice_code'     => $order->invoice_code,
+                    'status'           => $order->status,
+                    'total_amount'     => $order->total_amount,
                     'order_placed_date' => $order->created_at->format('Y-m-d H:i:s'),
 
-                    // Related products
-                    'products'   => $order->orderItems->map(function ($item) {
+                    'products' => $order->orderItems->map(function ($item) {
                         $image = $item->product->images->first()?->path;
                         return [
-                            'product_id'   => $item->product->id,
-                            'name'         => $item->product->name,
-                            'slug'         => $item->product->slug,
-                            'image'        => $image
+                            'product_id' => $item->product->id,
+                            'name'       => $item->product->name,
+                            'slug'       => $item->product->slug,
+                            'image'      => $image
                                 ? asset('storage/' . str_replace('public/', '', $image))
                                 : null,
                         ];
