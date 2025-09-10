@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\UserController;
-
+use App\Models\User;
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -14,5 +14,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('users')->group(function () {
         Route::get('/info', [UserController::class, 'loninUserInfo']);
+        Route::get('/dashboard',[UserController::class, 'userDashboard']);
     });
 });

@@ -9,6 +9,7 @@ use App\Models\ShippingAddress;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Activity;
+use App\Models\Wishlist;
 use App\Models\Expense;
 use App\Models\Coupon;
 use Illuminate\Support\Facades\Auth;
@@ -264,6 +265,68 @@ class UserController extends Controller
                 'message' => 'Something went wrong.',
                 'data'    => [],
                 'errors'  => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // login user dashkboard
+    public function userDashboard(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'status'  => 401,
+                    'message' => 'Unauthorized',
+                    'data'    => (object)[],
+                    'error'   => 'User not logged in'
+                ], 401);
+            }
+
+            //  Total orders by this user
+            $totalOrders = $user->orders()->count();
+
+            //  Total wishlists by this user
+            $totalWishlists = Wishlist::where('user_id', $user->id)->count();
+
+            //  Total addresses by this user
+            $totalAddresses = ShippingAddress::where('user_id', $user->id)->count();
+
+            //  Total spent by this user (sum of padi_amount in payments)
+            $totalSpent = Payment::whereHas('order', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->sum('padi_amount');
+
+            return response()->json([
+                'success' => true,
+                'status'  => 200,
+                'message' => 'User dashboard retrieved successfully.',
+                'data'    => [
+                    'user'           => [
+                        'id'      => $user->id,
+                        'name'    => $user->name,
+                        'email'   => $user->email,
+                        'phone'   => $user->phone,
+                        'address' => $user->address,
+                    ],
+                    'stats' => [
+                        'total_orders'    => $totalOrders,
+                        'total_wishlists' => $totalWishlists,
+                        'total_addresses' => $totalAddresses,
+                        'total_spent'     => $totalSpent,
+                    ]
+                ],
+                'error'   => null
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 500,
+                'message' => 'Something went wrong.',
+                'data'    => (object)[],
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
