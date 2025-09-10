@@ -5,6 +5,12 @@ use App\Http\Controllers\Carrer\CarrerController;
 use App\Http\Controllers\Carrer\CareerFormController;
 
 
+Route::prefix('careers')->group(function () {
+    Route::get('/active', [CarrerController::class, 'activeCareers']);
+    Route::post('/forms/{career_id}', [CareerFormController::class, 'store']);
+    Route::get('/forms/{career_id}', [CareerFormController::class, 'index']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('careers')->group(function () {
         Route::get('/', [CarrerController::class, 'index']);
@@ -15,9 +21,4 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/status/{careers_id}', [CarrerController::class, 'changeStatus']);
         Route::get('/forms/{career_id}/{form_id}', [CareerFormController::class, 'show']);
     });
-});
-Route::prefix('careers')->group(function () {
-    Route::get('/active', [CarrerController::class, 'activeCareers']);
-    Route::post('/forms/{career_id}', [CareerFormController::class, 'store']);
-    Route::get('/forms/{career_id}', [CareerFormController::class, 'index']);
 });
