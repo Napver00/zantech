@@ -11,4 +11,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [UserController::class, 'index']);
         Route::get('/all-info/{user_id}', [UserController::class, 'shwoAllInfo']);
     });
+
+    Route::prefix('users')->group(function () {
+        Route::get('/info', [UserController::class, 'loninUserInfo']);
+    });
 });

@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\Activity;
 use App\Models\Expense;
 use App\Models\Coupon;
+use Illuminate\Support\Facades\Auth;
 
 
 class UserController extends Controller
@@ -223,6 +224,46 @@ class UserController extends Controller
                 'message' => 'An error occurred while retrieving activities.',
                 'data' => null,
                 'errors' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // login user info
+    public function loninUserInfo(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'status'  => 404,
+                    'message' => 'No users found.',
+                    'data'    => [],
+                    'errors'  => 'User not authenticated.',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'status'  => 200,
+                'message' => 'User info retrieved.',
+                'data'    => [
+                    'id' => $user->id,
+                    'name'    => $user->name,
+                    'email'   => $user->email,
+                    'phone'   => $user->phone,
+                    'address' => $user->address,
+                ],
+                'errors'  => null,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 500,
+                'message' => 'Something went wrong.',
+                'data'    => [],
+                'errors'  => $e->getMessage(),
             ], 500);
         }
     }
