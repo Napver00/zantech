@@ -105,6 +105,7 @@ class WishlistController extends Controller
         // Format response
         $wishlistData = $wishlistItems->map(function ($wishlist) {
             return [
+                'id' => $wishlist->id,
                 'product_id' => $wishlist->product->id,
                 'product_slug' => $wishlist->product->slug,
                 'name' => $wishlist->product->name,
