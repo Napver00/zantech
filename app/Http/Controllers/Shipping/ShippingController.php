@@ -242,28 +242,40 @@ class ShippingController extends Controller
     public function userindex()
     {
         try {
-            // Get user_id from auth
             $user_id = auth()->id();
 
-            // Fetch all shipping addresses of the logged-in user in descending order
             $shippingAddresses = ShippingAddress::where('user_id', $user_id)
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'id'         => $item->id,
+                        'user_id'    => $item->User_id, 
+                        'f_name'     => $item->f_name,
+                        'l_name'     => $item->l_name,
+                        'phone'      => $item->phone,
+                        'address'    => $item->address,
+                        'city'       => $item->city,
+                        'zip'        => $item->zip,
+                        'created_at' => $item->created_at,
+                        'updated_at' => $item->updated_at,
+                    ];
+                });
 
             return response()->json([
                 'success' => true,
-                'status' => 200,
+                'status'  => 200,
                 'message' => 'Shipping addresses retrieved successfully.',
-                'data' => $shippingAddresses,
-                'errors' => null,
+                'data'    => $shippingAddresses,
+                'errors'  => null,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'status' => 500,
+                'status'  => 500,
                 'message' => 'Failed to retrieve shipping addresses.',
-                'data' => null,
-                'errors' => $e->getMessage(),
+                'data'    => null,
+                'errors'  => $e->getMessage(),
             ], 500);
         }
     }
