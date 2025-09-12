@@ -24,7 +24,7 @@ class PublicProductController extends Controller
             $minPrice = $request->input('min_price');
             $maxPrice = $request->input('max_price');
             $categoryId = $request->input('category_id');
-            $categorySlug = $request->input('category_slug'); 
+            $categorySlug = $request->input('category_slug');
 
             // Base query to fetch products with all related images of type 'product'
             $query = Item::with(['images' => function ($query) {
@@ -436,9 +436,8 @@ class PublicProductController extends Controller
                 ->get();
 
             $formattedProducts = $products->map(function ($product) {
-                $imagePaths = $product->images->map(function ($image) {
-                    return url('public/' . $image->path);
-                })->toArray();
+                $firstImage = $product->images->first(); 
+                $imagePath = $firstImage ? url('public/' . $firstImage->path) : null;
 
                 return [
                     'id' => $product->id,
@@ -449,9 +448,10 @@ class PublicProductController extends Controller
                     'quantity' => $product->quantity,
                     'price' => $product->price,
                     'discount' => $product->discount,
-                    'image_paths' => $imagePaths,
+                    'image' => $imagePath,
                 ];
             });
+
 
             return response()->json([
                 'success' => true,
