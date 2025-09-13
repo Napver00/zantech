@@ -9,6 +9,7 @@ return [
         'http://localhost:3000',
         'http://localhost:5173',
         'https://storeadmin.zantechbd.com',
+        'https://media.zantechbd.com',
     ],
 
     'allowed_headers' => ['*'],
